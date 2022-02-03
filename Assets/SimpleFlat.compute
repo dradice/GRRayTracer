@@ -1,0 +1,114 @@
+#pragma kernel CSMain
+#pragma enable_d3d11_debug_symbols
+RWTexture2D<float4> Result;
+
+float4x4 _CameraToWorld;
+float4x4 _CameraInverseProjection;
+
+Texture2D<float4> _SkyboxTexture;
+SamplerState sampler_SkyboxTexture;
+
+float2 _PixelOffset;
+
+static const float PI = 3.14159265f;
+
+struct Ray
+{
+    float u[8];
+    float u_0[8];
+};
+
+Ray CreateRay(float3 origin, float3 direction)
+{
+    Ray ray;
+
+    ray.u[0] = 0.0f;
+    ray.u[1] = origin.x;
+    ray.u[2] = origin.y;
+    ray.u[3] = origin.z;
+    ray.u[4] = 1.0f;
+    ray.u[5] = direction.x;
+    ray.u[6] = direction.y;
+    ray.u[7] = direction.z;
+
+    [unroll]
+    for(int i = 0; i < 8; i++){
+        ray.u_0[i] = ray.u[i];
+    }
+
+    return ray;
+}
+
+void ShootRay(inout Ray ray)
+{ //this function shoots rays in the direction they originate from until the yreach a certain distance (int count is incremented to maximum amount)
+
+
+    int count = 0;
+
+
+    while(count <= 20) //the bigger this number is, the more correct the "flat" background looks. The smaller it is, the more strange it gets. 
+    //** This could indicate that the rays start with an initial origin, but the rays do not get a new origin as the camera moves. **
+    {
+        
+        [unroll]
+        for(int i = 0; i < 4; i++){
+            ray.u[i] += ray.u[i + 4];
+        }
+
+        count++;
+    }
+    
+}
+
+float3 SampleBackground(Ray ray)
+{
+    float deltaU[4];
+    
+    [unroll]
+    for(int i = 0; i < 4; i++){
+        deltaU[i] = ray.u[i] - ray.u_0[i];
+    }
+
+    float distance = sqrt((deltaU[1] * deltaU[1]) + (deltaU[2] * deltaU[2])  + (deltaU[3] * deltaU[3]));
+    float theta = acos(deltaU[2] / distance) / -PI;
+    float phi = atan2(deltaU[1], -deltaU[3]) / -PI * 0.5f;
+
+       
+    return _SkyboxTexture.SampleLevel(sampler_SkyboxTexture, float2(phi, theta), 0).xyz;
+}
+
+Ray CreateCameraRay(float2 uv) {
+  // Transform the camera origin to world space
+  float3 origin = mul(_CameraToWorld, float4(0.0f, 0.0f, 0.0f, 1.0f)).xyz;
+
+  // Invert the perspective projection of the view-space position
+  float3 direction = mul(_CameraInverseProjection, float4(uv, 0.0f, 1.0f)).xyz;
+  // Transform the direction from camera to world space and normalize
+  direction = mul(_CameraToWorld, float4(direction, 0.0f)).xyz;
+  direction = normalize(direction);
+  return CreateRay(origin, direction);
+}
+
+[numthreads(8, 8, 1)] void CSMain(uint3 id
+                                  : SV_DispatchThreadID) {
+  // Get the dimensions of the RenderTexture
+  uint width, height;
+  Result.GetDimensions(width, height);
+  // Transform pixel to [-1,1] range
+  float2 uv =
+      float2((id.xy + _PixelOffset) / float2(width, height) * 2.0f - 1.0f);
+  // Get a ray for the UVs
+  Ray ray = CreateCameraRay(uv);
+
+  ShootRay(ray);
+
+  // Trace and shade
+  float3 result = float3(0, 0, 0);
+  //for (int i = 0; i < 8; i++) {
+
+    result = SampleBackground(ray); //takes the final position of each ray and passes it to the sample background function
+   // if (!any(ray.energy))
+     // break;
+  //}
+  Result[id.xy] = float4(result, 1);
+}
