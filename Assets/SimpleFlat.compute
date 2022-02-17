@@ -42,20 +42,71 @@ Ray CreateRay(float3 origin, float3 direction)
 void ShootRay(inout Ray ray)
 { //this function shoots rays in the direction they originate from until the yreach a certain distance (int count is incremented to maximum amount)
 
+    float k[8];
 
-    int count = 0;
+    float u_star[8];
+
+    float u_euler[8];
+
+    float time = 0.0f;
+
+    float dt = 1e-10;
+
+    float error;
+
+    float tol = 1e-6;
+
+    float u_trial[8];
+
+    float dt_min = 1e-10;
 
 
-    while(count <= 20) //the bigger this number is, the more correct the "flat" background looks. The smaller it is, the more strange it gets. 
+    while(time <= 20) //the bigger this number is, the more correct the "flat" background looks. The smaller it is, the more strange it gets. 
     //** This could indicate that the rays start with an initial origin, but the rays do not get a new origin as the camera moves. **
     {
-        
         [unroll]
         for(int i = 0; i < 4; i++){
-            ray.u[i] += ray.u[i + 4];
+            k[i] = ray.u[i+4];
+            k[i+4] = 0;
         }
 
-        count++;
+        [unroll]
+        for(int i = 0; i < 8; i++){
+            u_star[i] = ray.u[i] + (0.5)*dt*k[i];
+            u_euler[i] = ray.u[i] + dt*k[i];
+        }
+
+        [unroll]
+        for(int i = 0; i < 4; i++){
+            k[i] = u_star[i+4];
+            k[i+4] = 0;
+        }
+        
+        [unroll]
+        for(int i = 0; i < 8; i++){
+            u_trial[i] = ray.u[i] + dt*k[i];
+        }
+
+        error = 0.0f;
+        [unroll]
+        for(int i = 1; i < 4; i++){
+            error += abs(u_trial[i] - u_euler[i]);
+        }
+
+        if(error < tol || dt <= dt_min){
+            time += dt;
+            [unroll]
+            for(int i = 0; i < 8; i++){
+                ray.u[i] = u_trial[i];
+            }
+            if(4*error < tol){
+                dt = dt * 2;
+            }
+        }
+        else{
+            dt = 0.5f * dt;
+        }
+
     }
     
 }
