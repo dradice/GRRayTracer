@@ -27,9 +27,9 @@ Ray CreateRay(float3 origin, float3 direction)
     ray.u[2] = origin.y;
     ray.u[3] = origin.z;
     ray.u[4] = 1.0f;
-    ray.u[5] = direction.x;
-    ray.u[6] = direction.y;
-    ray.u[7] = direction.z;
+    ray.u[5] = -direction.x;
+    ray.u[6] = -direction.y;
+    ray.u[7] = -direction.z;
 
     [unroll]
     for(int i = 0; i < 8; i++){
@@ -37,6 +37,19 @@ Ray CreateRay(float3 origin, float3 direction)
     }
 
     return ray;
+}
+
+void flatChristoffel(float x, float y, float z, inout float Christoffel[4][4][4]){
+    [unroll]
+    for(int i = 0; i < 4; i++){
+       
+        for(int j = 0; j < 4; j++){
+         
+            for(int k = 0; k < 4; k++){
+                Christoffel[i][j][k] = 0.0f;
+            }
+        }
+    }
 }
 
 void ShootRay(inout Ray ray)
@@ -60,15 +73,28 @@ void ShootRay(inout Ray ray)
 
     float dt_min = 1e-10;
 
+    float Christoffel[4][4][4];
 
     while(time <= 20) //the bigger this number is, the more correct the "flat" background looks. The smaller it is, the more strange it gets. 
     //** This could indicate that the rays start with an initial origin, but the rays do not get a new origin as the camera moves. **
     {
+        flatChristoffel(ray.u[1], ray.u[2], ray.u[3], Christoffel);
+  
         [unroll]
-        for(int i = 0; i < 4; i++){
-            k[i] = ray.u[i+4];
-            k[i+4] = 0;
+        for(int a = 0; a < 4; a++){
+            k[a] = -ray.u[a+4];
+            k[a + 4] = 0.0f;
+       
+            for(int b = 0; b < 4; b++){
+            
+                for(int c = 0; c < 4; c++){
+                    k[a + 4] += Christoffel[a][b][c] * ray.u[b + 4] * ray.u[c + 4];
+                }
+            }
         }
+            
+     
+        
 
         [unroll]
         for(int i = 0; i < 8; i++){
@@ -76,10 +102,19 @@ void ShootRay(inout Ray ray)
             u_euler[i] = ray.u[i] + dt*k[i];
         }
 
+        flatChristoffel(u_star[1], u_star[2], u_star[3], Christoffel);
+  
         [unroll]
-        for(int i = 0; i < 4; i++){
-            k[i] = u_star[i+4];
-            k[i+4] = 0;
+        for(int a = 0; a < 4; a++){
+            k[a] = -u_star[a+4];
+            k[a + 4] = 0.0f;
+   
+            for(int b = 0; b < 4; b++){
+    
+                for(int c = 0; c < 4; c++){
+                    k[a + 4] += Christoffel[a][b][c] * u_star[b + 4] * u_star[c + 4];
+                }
+            }
         }
         
         [unroll]
