@@ -12,6 +12,9 @@ float2 _PixelOffset;
 
 static const float PI = 3.14159265f;
 
+float bhRad = 2.0f;
+float rho_s = 0.5f;
+
 struct Ray
 {
     float u[8];
@@ -39,18 +42,198 @@ Ray CreateRay(float3 origin, float3 direction)
     return ray;
 }
 
-void flatChristoffel(float x, float y, float z, inout float Christoffel[4][4][4]){
+float SquareRoot(float n, float initialGuess)
+{
+    float x = initialGuess;
+
+    float root;
+
+    int count = 0;
+
+    float tol = 0.01f;
+
+    while(1)
+    {
+        count++;
+
+        root = 0.5f * (x + (n / x));
+
+        if(abs(root - x) < tol)
+        {
+            break;
+        }
+        x = root;
+    }
+
+    return root;
+}
+
+float Pow7(float input)
+{
+    return input * input * input * input * input * input * input;
+}
+
+float Pow2(float input)
+{
+    return input * input;
+}
+
+float Pow3(float input)
+{
+    return input * input * input;
+}
+
+void flatChristoffel(float x, float y, float z, inout float4x4 Christoffel[4]){
+    
+
+    float rho = SquareRoot(((x * x) + (y * y) + (z * z)), (x + y + z));
+    float rhoSquared = rho * rho;
+    float rhoSquareMinus = (rhoSquared - rho_s * rho_s);
+    float rhoMinus2 = (rho - rho_s);
+    float rhoPlus2 = (rho + rho_s);
+
+    float4x4 c0 = {
+        {0, 2 * x * rho_s / (rho * rhoSquareMinus), 2 * y * rho_s / (rho * rhoSquareMinus),  2 * z * rho_s / (rho *  rhoSquareMinus)},
+        {2 * x * rho_s / (rho * rhoSquareMinus), 0, 0, 0},
+        {2 * y * rho_s / (rho * rhoSquareMinus), 0, 0, 0},
+        {2 * z * rho_s / (rho * rhoSquareMinus), 0, 0, 0}
+        // {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f}
+    };
+    
+    float4x4 c1 = {
+        { 2 * x * Pow3(rho) * (rhoMinus2) * rho_s / (Pow3(rhoPlus2)), 0, 0, 0},
+        { 0, -2 * x * rho_s / (rhoSquared * rhoPlus2), -2 * y * rho_s / (rhoSquared * rhoPlus2), -2 * z * rho_s / (rhoSquared * rhoPlus2)},
+        { 0,  -2 * y * rho_s / (rhoSquared * rhoPlus2) / (rho * rho * rho * (rhoPlus2)), 2 * x * rho_s / (rhoSquared * rhoPlus2), 0},
+        { 0, -2 * z * rho_s / (rhoSquared * rhoPlus2), 0, 2 * x * rho_s / (rhoSquared * rhoPlus2)}
+        // {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f}
+    };
+
+    float4x4 c2 = {
+        {2 * y * Pow2(rho) * (rhoMinus2) * rho_s / ((rhoPlus2)), 0, 0, 0},
+        {0, 2 * y * rho_s / (rhoSquared * rhoPlus2), -2 * x * rho_s / (rhoSquared * rhoPlus2), 0},
+        {0, -2 * x * rho_s / (rhoSquared * rhoPlus2), -2 * y * rho_s / (rhoSquared * rhoPlus2), - 2 * z * rho_s / (rhoSquared * rhoPlus2)},
+        {0, 0,  -2 * z * rho_s / (rhoSquared * rhoPlus2), 2 * y * rho_s / (rhoSquared * rhoPlus2)}
+        // {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f}
+    };
+
+    float4x4 c3 = {
+        {2 * z * Pow2(rho) * (rhoMinus2) * rho_s / (Pow7(rhoPlus2)), 0, 0, 0},
+        {0, 2 * z * rho_s / (rhoSquared * rhoPlus2), 0, -2 * x * rho_s / (rhoSquared * rhoPlus2)},
+        {0, 0, 2 * z * rho_s / (rhoSquared * rhoPlus2), -2 * y * rho_s / (rhoSquared * rhoPlus2)},
+        {0,  -2 * x * rho_s / (rhoSquared * rhoPlus2),  -2 * y * rho_s / (rhoSquared * rhoPlus2), -2 * z * rho_s / (rhoSquared * rhoPlus2)}
+        // {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f}
+    };
+
+    // Christoffel[0] = c0;
+    // Christoffel[1] = c1;
+    // Christoffel[2] = c2;
+    // Christoffel[3] = c3;
     [unroll]
-    for(int i = 0; i < 4; i++){
-       
-        for(int j = 0; j < 4; j++){
-         
-            for(int k = 0; k < 4; k++){
-                Christoffel[i][j][k] = 0.0f;
-            }
+    for(int a = 0; a < 4; a++){
+        for(int b = 0; b < 4; b++){
+            Christoffel[0][a][b] = c0[a][b];
+            Christoffel[1][a][b] = c1[a][b];
+            Christoffel[2][a][b] = c2[a][b];
+            Christoffel[3][a][b] = c3[a][b];
         }
     }
-}
+    
+
+    // Christoffel = {
+    //     {
+    //             {0.0f, 0.0f, 0.0f, 0.0f},
+    //             {0.0f, 0.0f, 0.0f, 0.0f},
+    //             {0.0f, 0.0f, 0.0f, 0.0f},
+    //             {0.0f, 0.0f, 0.0f, 0.0f}
+    //     },
+              
+    //     {
+    //             {0.0f, 0.0f, 0.0f, 0.0f},
+    //             {0.0f, 0.0f, 0.0f, 0.0f},
+    //             {0.0f, 0.0f, 0.0f, 0.0f},
+    //             {0.0f, 0.0f, 0.0f, 0.0f}
+    //     },
+               
+    //     {
+    //             {0.0f, 0.0f, 0.0f, 0.0f},
+    //             {0.0f, 0.0f, 0.0f, 0.0f},
+    //             {0.0f, 0.0f, 0.0f, 0.0f},
+    //             {0.0f, 0.0f, 0.0f, 0.0f}
+    //     },
+
+    //     {
+    //             {0.0f, 0.0f, 0.0f, 0.0f},
+    //             {0.0f, 0.0f, 0.0f, 0.0f},
+    //             {0.0f, 0.0f, 0.0f, 0.0f},
+    //             {0.0f, 0.0f, 0.0f, 0.0f}
+    //     }
+    // };
+
+    // Christoffel[][0][0] =
+    // {{0.0f, 0.0f, 0.0f, 0.0f}};
+
+    // Christoffel[0] = 
+    //     {
+                // {0, 2 * x * rho_s / (rho * rhoSquareMinus), 2 * y * rho_s / (rho * rhoSquareMinus),  2 * z * rho_s / (rho *  rhoSquareMinus)},
+                // {2 * x * rho_s / (rho * rhoSquareMinus), 0, 0, 0},
+                // {2 * y * rho_s / (rho * rhoSquareMinus), 0, 0, 0},
+                // {2 * z * rho_s / (rho * rhoSquareMinus), 0, 0, 0}
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f}
+        // };
+    // Christoffel[1] = 
+    //     {
+                // { 2 * x * Pow3(rho) * (rhoMinus2) * rho_s / (Pow3(rhoPlus2)), 0, 0, 0},
+                // { 0, -2 * x * rho_s / (rhoSquared * rhoPlus2), -2 * y * rho_s / (rhoSquared * rhoPlus2), -2 * z * rho_s / (rhoSquared * rhoPlus2)},
+                // { 0,  -2 * y * rho_s / (rhoSquared * rhoPlus2) / (rho * rho * rho * (rhoPlus2)), 2 * x * rho_s / (rhoSquared * rhoPlus2), 0},
+                // { 0, -2 * z * rho_s / (rhoSquared * rhoPlus2), 0, 2 * x * rho_s / (rhoSquared * rhoPlus2)}
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f}
+        // };
+
+    // Christoffel[2] = 
+    //     {
+                // {2 * y * Pow2(rho) * (rhoMinus2) * rho_s / ((rhoPlus2)), 0, 0, 0},
+                // {0, 2 * y * rho_s / (rhoSquared * rhoPlus2), -2 * x * rho_s / (rhoSquared * rhoPlus2), 0},
+                // {0, -2 * x * rho_s / (rhoSquared * rhoPlus2), -2 * y * rho_s / (rhoSquared * rhoPlus2), - 2 * z * rho_s / (rhoSquared * rhoPlus2)},
+                // {0, 0,  -2 * z * rho_s / (rhoSquared * rhoPlus2), 2 * y * rho_s / (rhoSquared * rhoPlus2)}
+                // {0.0f, 0.0f, 0.0f, 0.0f},
+                // {0.0f, 0.0f, 0.0f, 0.0f},
+                // {0.0f, 0.0f, 0.0f, 0.0f},
+                // {0.0f, 0.0f, 0.0f, 0.0f}
+        // };
+
+    // Christoffel[3] = 
+    //     {
+                // {2 * z * Pow2(rho) * (rhoMinus2) * rho_s / (Pow7(rhoPlus2)), 0, 0, 0},
+                // {0, 2 * z * rho_s / (rhoSquared * rhoPlus2), 0, -2 * x * rho_s / (rhoSquared * rhoPlus2)},
+                // {0, 0, 2 * z * rho_s / (rhoSquared * rhoPlus2), -2 * y * rho_s / (rhoSquared * rhoPlus2)},
+                // {0,  -2 * x * rho_s / (rhoSquared * rhoPlus2),  -2 * y * rho_s / (rhoSquared * rhoPlus2), -2 * z * rho_s / (rhoSquared * rhoPlus2)}
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f},
+        //         {0.0f, 0.0f, 0.0f, 0.0f}
+        // };
+
+
+    }
+
 
 void ShootRay(inout Ray ray)
 { //this function shoots rays in the direction they originate from until the yreach a certain distance (int count is incremented to maximum amount)
@@ -63,20 +246,22 @@ void ShootRay(inout Ray ray)
 
     float time = 0.0f;
 
-    float dt = 1e-10;
+    float dt = 1e-6f;
 
     float error;
 
-    float tol = 1e-6;
+    float tol = 0.5f;
 
     float u_trial[8];
 
     float dt_min = 1e-10;
 
-    float Christoffel[4][4][4];
+    float4x4 Christoffel[4];
 
-    while(time <= 20) //the bigger this number is, the more correct the "flat" background looks. The smaller it is, the more strange it gets. 
-    //** This could indicate that the rays start with an initial origin, but the rays do not get a new origin as the camera moves. **
+    float count = 0.0f;
+    [loop]
+    while(count < 100)//the bigger this number is, the more correct the "flat" background looks. The smaller it is, the more strange it gets. 
+    //** This could indiate that the rays start with an initial origin, but the rays do not get a new origin as the camera moves. **
     {
         flatChristoffel(ray.u[1], ray.u[2], ray.u[3], Christoffel);
   
@@ -88,7 +273,7 @@ void ShootRay(inout Ray ray)
             for(int b = 0; b < 4; b++){
             
                 for(int c = 0; c < 4; c++){
-                    k[a + 4] += Christoffel[a][b][c] * ray.u[b + 4] * ray.u[c + 4];
+                    k[a + 4] += (Christoffel[a])[b][c] * ray.u[b + 4] * ray.u[c + 4];
                 }
             }
         }
@@ -112,7 +297,7 @@ void ShootRay(inout Ray ray)
             for(int b = 0; b < 4; b++){
     
                 for(int c = 0; c < 4; c++){
-                    k[a + 4] += Christoffel[a][b][c] * u_star[b + 4] * u_star[c + 4];
+                    k[a + 4] += (Christoffel[a])[b][c] * u_star[b + 4] * u_star[c + 4];
                 }
             }
         }
@@ -141,7 +326,7 @@ void ShootRay(inout Ray ray)
         else{
             dt = 0.5f * dt;
         }
-
+        count += 1.0f;
     }
     
 }
