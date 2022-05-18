@@ -295,7 +295,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -18}
+  m_LocalPosition: {x: 0, y: 0, z: -11.93}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -313,8 +313,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a8b140fef79e46479dbeb5b96205e98, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  SimpleFlat: {fileID: 7200000, guid: 68939f00bcb5c7549be315a494d76745, type: 3}
-  SkyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
+  cameraVectorShader: {fileID: 7200000, guid: 9d5805b1202f0f24a9d78bc0d5585d07, type: 3}
+  rayUpdateShader: {fileID: 7200000, guid: 68939f00bcb5c7549be315a494d76745, type: 3}
+  skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
+  timeStep: 0.001
+  poleMargin: 0.01
+  poleStep: 0.0001
+  escapeDistance: 10000
+  horizonRadius: 0.5
+  numFrames: 60
+  framesPerSecond: 30
+  updateInterval: 15
+  overSample: 4
+  maxSoftPasses: 5000
+  maxPasses: 10000
+  saveToFile: 0
+  timeStampFile: 0
+  frameStampFile: 1
+  filenamePrefix: 
+  subfolder: 
+  exitOnComplete: 0
 --- !u!114 &963194230
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -324,9 +342,6 @@ MonoBehaviour:
   m_GameObject: {fileID: 963194225}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b231c25c2b814ae4bad9fa8cf71aa794, type: 3}
+  m_Script: {fileID: 0}
   m_Name: 
   m_EditorClassIdentifier: 
-  panSpeed: 20
-  panBorderThickness: 10
-  rotationSpeed: 5

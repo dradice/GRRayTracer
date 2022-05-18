@@ -1,0 +1,43 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+// Output parameters
+RWTexture2D<float4> Position;
+RWTexture2D<float4> Direction;
+RWTexture2D<float4> Color;
+RWTexture2D<int> isComplete;
+
+// Input parameters
+float4x4 _CameraToWorld;
+float4x4 _CameraInverseProjection;
+float3 _CameraPositionCartesian;
+float3 _CameraPositionSpherical;
+float horizonRadius;
+
+[numthreads(8, 8, 1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // Initialize pixel color
+    float3 pixelColor;
+
+    // Get the dimensions of the RenderTexture
+    uint width, height;
+    Position.GetDimensions(width, height);
+
+    // Transform pixel to [-1,1] range
+    float2 uv = float2((id.xy + float2(0.5f, 0.5f)) / float2(width, height) * 2.0f - 1.0f);
+
+    // Invert the perspective projection of the view-space position
+    float3 direction = mul(_CameraInverseProjection, float4(uv, 0.0f, 1.0f)).xyz;
+
+    // Transform the direction from camera to world space and normalize
+    direction = mul(_CameraToWorld, float4(direction, 0.0f)).xyz;
+    direction = normalize(direction);
+
+    // Pass direction to result
+    Position[id.xy] = float4(0.0, _CameraPositionCartesian);
+    Direction[id.xy] = float4(1.0, direction);
+    Color[id.xy] = float4(0.0, 0.0, 0.0, 0.0);
+    isComplete[id.xy] = 0;
+
+}

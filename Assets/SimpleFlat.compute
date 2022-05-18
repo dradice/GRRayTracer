@@ -1,47 +1,31 @@
+// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
-#pragma enable_d3d11_debug_symbols
-RWTexture2D<float4> Result;
 
-float4x4 _CameraToWorld;
-float4x4 _CameraInverseProjection;
-
-Texture2D<float4> _SkyboxTexture;
-SamplerState sampler_SkyboxTexture;
-
-float2 _PixelOffset;
-
+// Constants
 static const float PI = 3.14159265f;
 
-float bhRad = 2.0f;
-float rho_s = 0.5f;
+// Output parameters
+RWTexture2D<float4> Position;
+RWTexture2D<float4> Direction;
+RWTexture2D<float4> Color;
+RWTexture2D<int> isComplete;
 
+// Input textures
+TextureCube<float4> _SkyboxTexture;
 
-struct Ray
-{
-    float u[8];
-    float u_0[8];
-};
+// Step size parameters
+float timeStep;
+float poleMargin;
+float poleStep;
+bool hardCheck;
 
-Ray CreateRay(float3 origin, float3 direction)
-{
-    Ray ray;
+// Physical parameters
+float escapeDistance;
+float horizonRadius;
+float time;
 
-    ray.u[0] = 0.0f;
-    ray.u[1] = origin.x;
-    ray.u[2] = origin.y;
-    ray.u[3] = origin.z;
-    ray.u[4] = 1.0f;
-    ray.u[5] = -direction.x;
-    ray.u[6] = -direction.y;
-    ray.u[7] = -direction.z;
-
-    [unroll]
-    for(int i = 0; i < 8; i++){
-        ray.u_0[i] = ray.u[i];
-    }
-
-    return ray;
-}
+// Samplers
+SamplerState sampler_SkyboxTexture;
 
 float SquareRoot(float n, float initialGuess)
 {
@@ -89,52 +73,52 @@ void flatChristoffel(float x, float y, float z, inout float4x4 Christoffel[4]){
 
     float rho = SquareRoot(((x * x) + (y * y) + (z * z)), (x + y + z));
     float rhoSquared = rho * rho;
-    float rhoSquareMinus = (rhoSquared - rho_s * rho_s);
-    float rhoMinus2 = (rho - rho_s);
-    float rhoPlus2 = (rho + rho_s);
+    float rhoSquareMinus = (rhoSquared - horizonRadius * horizonRadius);
+    float rhoMinus2 = (rho - horizonRadius);
+    float rhoPlus2 = (rho + horizonRadius);
 
     float4x4 c0 = {
-        // {0, 2 * x * rho_s / (rho * rhoSquareMinus), 2 * y * rho_s / (rho * rhoSquareMinus),  2 * z * rho_s / (rho *  rhoSquareMinus)},
-        // {2 * x * rho_s / (rho * rhoSquareMinus), 0, 0, 0},
-        // {2 * y * rho_s / (rho * rhoSquareMinus), 0, 0, 0},
-        // {2 * z * rho_s / (rho * rhoSquareMinus), 0, 0, 0}
-        {0.0f, 0.0f, 0.0f, 0.0f},
-                {0.0f, 0.0f, 0.0f, 0.0f},
-                {0.0f, 0.0f, 0.0f, 0.0f},
-                {0.0f, 0.0f, 0.0f, 0.0f}
+        // {0, 2 * x * horizonRadius / (rho * rhoSquareMinus), 2 * y * horizonRadius / (rho * rhoSquareMinus),  2 * z * horizonRadius / (rho *  rhoSquareMinus)},
+        // {2 * x * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0},
+        // {2 * y * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0},
+        // {2 * z * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0}
+        {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0}
     };
     
     float4x4 c1 = {
-        // { 2 * x * Pow3(rho) * (rhoMinus2) * rho_s / (Pow3(rhoPlus2)), 0, 0, 0},
-        // { 0, -2 * x * rho_s / (rhoSquared * rhoPlus2), -2 * y * rho_s / (rhoSquared * rhoPlus2), -2 * z * rho_s / (rhoSquared * rhoPlus2)},
-        // { 0,  -2 * y * rho_s / (rhoSquared * rhoPlus2) / (rho * rho * rho * (rhoPlus2)), 2 * x * rho_s / (rhoSquared * rhoPlus2), 0},
-        // { 0, -2 * z * rho_s / (rhoSquared * rhoPlus2), 0, 2 * x * rho_s / (rhoSquared * rhoPlus2)}
-        {0.0f, 0.0f, 0.0f, 0.0f},
-                {0.0f, 0.0f, 0.0f, 0.0f},
-                {0.0f, 0.0f, 0.0f, 0.0f},
-                {0.0f, 0.0f, 0.0f, 0.0f}
+        // { 2 * x * Pow3(rho) * (rhoMinus2) * horizonRadius / (Pow3(rhoPlus2)), 0, 0, 0},
+        // { 0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * z * horizonRadius / (rhoSquared * rhoPlus2)},
+        // { 0,  -2 * y * horizonRadius / (rhoSquared * rhoPlus2) / (rho * rho * rho * (rhoPlus2)), 2 * x * horizonRadius / (rhoSquared * rhoPlus2), 0},
+        // { 0, -2 * z * horizonRadius / (rhoSquared * rhoPlus2), 0, 2 * x * horizonRadius / (rhoSquared * rhoPlus2)}
+        {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0}
     };
 
     float4x4 c2 = {
-        // {2 * y * Pow2(rho) * (rhoMinus2) * rho_s / ((rhoPlus2)), 0, 0, 0},
-        // {0, 2 * y * rho_s / (rhoSquared * rhoPlus2), -2 * x * rho_s / (rhoSquared * rhoPlus2), 0},
-        // {0, -2 * x * rho_s / (rhoSquared * rhoPlus2), -2 * y * rho_s / (rhoSquared * rhoPlus2), - 2 * z * rho_s / (rhoSquared * rhoPlus2)},
-        // {0, 0,  -2 * z * rho_s / (rhoSquared * rhoPlus2), 2 * y * rho_s / (rhoSquared * rhoPlus2)}
-        {0.0f, 0.0f, 0.0f, 0.0f},
-                {0.0f, 0.0f, 0.0f, 0.0f},
-                {0.0f, 0.0f, 0.0f, 0.0f},
-                {0.0f, 0.0f, 0.0f, 0.0f}
+        // {2 * y * Pow2(rho) * (rhoMinus2) * horizonRadius / ((rhoPlus2)), 0, 0, 0},
+        // {0, 2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * x * horizonRadius / (rhoSquared * rhoPlus2), 0},
+        // {0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2), - 2 * z * horizonRadius / (rhoSquared * rhoPlus2)},
+        // {0, 0,  -2 * z * horizonRadius / (rhoSquared * rhoPlus2), 2 * y * horizonRadius / (rhoSquared * rhoPlus2)}
+        {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0}
     };
 
     float4x4 c3 = {
-        // {2 * z * Pow2(rho) * (rhoMinus2) * rho_s / (Pow7(rhoPlus2)), 0, 0, 0},
-        // {0, 2 * z * rho_s / (rhoSquared * rhoPlus2), 0, -2 * x * rho_s / (rhoSquared * rhoPlus2)},
-        // {0, 0, 2 * z * rho_s / (rhoSquared * rhoPlus2), -2 * y * rho_s / (rhoSquared * rhoPlus2)},
-        // {0,  -2 * x * rho_s / (rhoSquared * rhoPlus2),  -2 * y * rho_s / (rhoSquared * rhoPlus2), -2 * z * rho_s / (rhoSquared * rhoPlus2)}
-        {0.0f, 0.0f, 0.0f, 0.0f},
-                {0.0f, 0.0f, 0.0f, 0.0f},
-                {0.0f, 0.0f, 0.0f, 0.0f},
-                {0.0f, 0.0f, 0.0f, 0.0f}
+        // {2 * z * Pow2(rho) * (rhoMinus2) * horizonRadius / (Pow7(rhoPlus2)), 0, 0, 0},
+        // {0, 2 * z * horizonRadius / (rhoSquared * rhoPlus2), 0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2)},
+        // {0, 0, 2 * z * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2)},
+        // {0,  -2 * x * horizonRadius / (rhoSquared * rhoPlus2),  -2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * z * horizonRadius / (rhoSquared * rhoPlus2)}
+        {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0}
     };
 
     // Christoffel[0] = c0;
@@ -154,90 +138,90 @@ void flatChristoffel(float x, float y, float z, inout float4x4 Christoffel[4]){
 
     // Christoffel = {
     //     {
-    //             {0.0f, 0.0f, 0.0f, 0.0f},
-    //             {0.0f, 0.0f, 0.0f, 0.0f},
-    //             {0.0f, 0.0f, 0.0f, 0.0f},
-    //             {0.0f, 0.0f, 0.0f, 0.0f}
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0}
     //     },
               
     //     {
-    //             {0.0f, 0.0f, 0.0f, 0.0f},
-    //             {0.0f, 0.0f, 0.0f, 0.0f},
-    //             {0.0f, 0.0f, 0.0f, 0.0f},
-    //             {0.0f, 0.0f, 0.0f, 0.0f}
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0}
     //     },
                
     //     {
-    //             {0.0f, 0.0f, 0.0f, 0.0f},
-    //             {0.0f, 0.0f, 0.0f, 0.0f},
-    //             {0.0f, 0.0f, 0.0f, 0.0f},
-    //             {0.0f, 0.0f, 0.0f, 0.0f}
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0}
     //     },
 
     //     {
-    //             {0.0f, 0.0f, 0.0f, 0.0f},
-    //             {0.0f, 0.0f, 0.0f, 0.0f},
-    //             {0.0f, 0.0f, 0.0f, 0.0f},
-    //             {0.0f, 0.0f, 0.0f, 0.0f}
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0}
     //     }
     // };
 
     // Christoffel[][0][0] =
-    // {{0.0f, 0.0f, 0.0f, 0.0f}};
+    // {{0.0, 0.0, 0.0, 0.0}};
 
     // Christoffel[0] = 
     //     {
-                // {0, 2 * x * rho_s / (rho * rhoSquareMinus), 2 * y * rho_s / (rho * rhoSquareMinus),  2 * z * rho_s / (rho *  rhoSquareMinus)},
-                // {2 * x * rho_s / (rho * rhoSquareMinus), 0, 0, 0},
-                // {2 * y * rho_s / (rho * rhoSquareMinus), 0, 0, 0},
-                // {2 * z * rho_s / (rho * rhoSquareMinus), 0, 0, 0}
-        //         {0.0f, 0.0f, 0.0f, 0.0f},
-        //         {0.0f, 0.0f, 0.0f, 0.0f},
-        //         {0.0f, 0.0f, 0.0f, 0.0f},
-        //         {0.0f, 0.0f, 0.0f, 0.0f}
+                // {0, 2 * x * horizonRadius / (rho * rhoSquareMinus), 2 * y * horizonRadius / (rho * rhoSquareMinus),  2 * z * horizonRadius / (rho *  rhoSquareMinus)},
+                // {2 * x * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0},
+                // {2 * y * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0},
+                // {2 * z * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0}
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0}
         // };
     // Christoffel[1] = 
     //     {
-                // { 2 * x * Pow3(rho) * (rhoMinus2) * rho_s / (Pow3(rhoPlus2)), 0, 0, 0},
-                // { 0, -2 * x * rho_s / (rhoSquared * rhoPlus2), -2 * y * rho_s / (rhoSquared * rhoPlus2), -2 * z * rho_s / (rhoSquared * rhoPlus2)},
-                // { 0,  -2 * y * rho_s / (rhoSquared * rhoPlus2) / (rho * rho * rho * (rhoPlus2)), 2 * x * rho_s / (rhoSquared * rhoPlus2), 0},
-                // { 0, -2 * z * rho_s / (rhoSquared * rhoPlus2), 0, 2 * x * rho_s / (rhoSquared * rhoPlus2)}
-        //         {0.0f, 0.0f, 0.0f, 0.0f},
-        //         {0.0f, 0.0f, 0.0f, 0.0f},
-        //         {0.0f, 0.0f, 0.0f, 0.0f},
-        //         {0.0f, 0.0f, 0.0f, 0.0f}
+                // { 2 * x * Pow3(rho) * (rhoMinus2) * horizonRadius / (Pow3(rhoPlus2)), 0, 0, 0},
+                // { 0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * z * horizonRadius / (rhoSquared * rhoPlus2)},
+                // { 0,  -2 * y * horizonRadius / (rhoSquared * rhoPlus2) / (rho * rho * rho * (rhoPlus2)), 2 * x * horizonRadius / (rhoSquared * rhoPlus2), 0},
+                // { 0, -2 * z * horizonRadius / (rhoSquared * rhoPlus2), 0, 2 * x * horizonRadius / (rhoSquared * rhoPlus2)}
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0}
         // };
 
     // Christoffel[2] = 
     //     {
-                // {2 * y * Pow2(rho) * (rhoMinus2) * rho_s / ((rhoPlus2)), 0, 0, 0},
-                // {0, 2 * y * rho_s / (rhoSquared * rhoPlus2), -2 * x * rho_s / (rhoSquared * rhoPlus2), 0},
-                // {0, -2 * x * rho_s / (rhoSquared * rhoPlus2), -2 * y * rho_s / (rhoSquared * rhoPlus2), - 2 * z * rho_s / (rhoSquared * rhoPlus2)},
-                // {0, 0,  -2 * z * rho_s / (rhoSquared * rhoPlus2), 2 * y * rho_s / (rhoSquared * rhoPlus2)}
-                // {0.0f, 0.0f, 0.0f, 0.0f},
-                // {0.0f, 0.0f, 0.0f, 0.0f},
-                // {0.0f, 0.0f, 0.0f, 0.0f},
-                // {0.0f, 0.0f, 0.0f, 0.0f}
+                // {2 * y * Pow2(rho) * (rhoMinus2) * horizonRadius / ((rhoPlus2)), 0, 0, 0},
+                // {0, 2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * x * horizonRadius / (rhoSquared * rhoPlus2), 0},
+                // {0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2), - 2 * z * horizonRadius / (rhoSquared * rhoPlus2)},
+                // {0, 0,  -2 * z * horizonRadius / (rhoSquared * rhoPlus2), 2 * y * horizonRadius / (rhoSquared * rhoPlus2)}
+                // {0.0, 0.0, 0.0, 0.0},
+                // {0.0, 0.0, 0.0, 0.0},
+                // {0.0, 0.0, 0.0, 0.0},
+                // {0.0, 0.0, 0.0, 0.0}
         // };
 
     // Christoffel[3] = 
     //     {
-                // {2 * z * Pow2(rho) * (rhoMinus2) * rho_s / (Pow7(rhoPlus2)), 0, 0, 0},
-                // {0, 2 * z * rho_s / (rhoSquared * rhoPlus2), 0, -2 * x * rho_s / (rhoSquared * rhoPlus2)},
-                // {0, 0, 2 * z * rho_s / (rhoSquared * rhoPlus2), -2 * y * rho_s / (rhoSquared * rhoPlus2)},
-                // {0,  -2 * x * rho_s / (rhoSquared * rhoPlus2),  -2 * y * rho_s / (rhoSquared * rhoPlus2), -2 * z * rho_s / (rhoSquared * rhoPlus2)}
-        //         {0.0f, 0.0f, 0.0f, 0.0f},
-        //         {0.0f, 0.0f, 0.0f, 0.0f},
-        //         {0.0f, 0.0f, 0.0f, 0.0f},
-        //         {0.0f, 0.0f, 0.0f, 0.0f}
+                // {2 * z * Pow2(rho) * (rhoMinus2) * horizonRadius / (Pow7(rhoPlus2)), 0, 0, 0},
+                // {0, 2 * z * horizonRadius / (rhoSquared * rhoPlus2), 0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2)},
+                // {0, 0, 2 * z * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2)},
+                // {0,  -2 * x * horizonRadius / (rhoSquared * rhoPlus2),  -2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * z * horizonRadius / (rhoSquared * rhoPlus2)}
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0}
         // };
 
 
     }
 
 
-void ShootRay(inout Ray ray)
-{ //this function shoots rays in the direction they originate from until the yreach a certain distance (int count is incremented to maximum amount)
+void ShootRay(inout float4 x, inout float4 u)
+{ //this function shoots rays in the direction they originate from until they reach a certain distance (int count is incremented to maximum amount)
 
     float k[8];
 
@@ -245,7 +229,7 @@ void ShootRay(inout Ray ray)
 
     float u_euler[8];
 
-    float time = 0.0f;
+    float time = 0.0;
 
     float dt = 1e-6f;
 
@@ -259,19 +243,19 @@ void ShootRay(inout Ray ray)
 
     float4x4 Christoffel[4];
 
-    float count = 0.0f;
+    float count = 0.0;
     
-        flatChristoffel(ray.u[1], ray.u[2], ray.u[3], Christoffel);
+        flatChristoffel(x[1], x[2], x[3], Christoffel);
   
         [unroll]
         for(int a = 0; a < 4; a++){
-            k[a] = -ray.u[a+4];
-            k[a + 4] = 0.0f;
+            k[a] = -u[a];
+            k[a + 4] = 0.0;
        
             for(int b = 0; b < 4; b++){
             
                 for(int c = 0; c < 4; c++){
-                    k[a + 4] += (Christoffel[a])[b][c] * ray.u[b + 4] * ray.u[c + 4];
+                    k[a + 4] += (Christoffel[a])[b][c] * u[b] * u[c];
                 }
             }
         }
@@ -280,9 +264,15 @@ void ShootRay(inout Ray ray)
         
 
         [unroll]
-        for(int i = 0; i < 8; i++){
-            u_star[i] = ray.u[i] + (0.5)*dt*k[i];
-            u_euler[i] = ray.u[i] + dt*k[i];
+        for(int i = 0; i < 4; i++){
+            u_star[i] = x[i] + (0.5)*dt*k[i];
+            u_euler[i] = x[i] + dt*k[i];
+        }
+
+        [unroll]
+        for(int i = 4; i < 8; i++){
+            u_star[i] = u[i - 4] + (0.5)*dt*k[i];
+            u_euler[i] = u[i - 4] + dt*k[i];
         }
 
         flatChristoffel(u_star[1], u_star[2], u_star[3], Christoffel);
@@ -290,7 +280,7 @@ void ShootRay(inout Ray ray)
         [unroll]
         for(int a = 0; a < 4; a++){
             k[a] = -u_star[a+4];
-            k[a + 4] = 0.0f;
+            k[a + 4] = 0.0;
    
             for(int b = 0; b < 4; b++){
     
@@ -301,11 +291,15 @@ void ShootRay(inout Ray ray)
         }
         
         [unroll]
-        for(int i = 0; i < 8; i++){
-            u_trial[i] = ray.u[i] + dt*k[i];
+        for(int i = 0; i < 4; i++){
+            u_trial[i] = x[i] + dt*k[i];
+        }
+        [unroll]
+        for(int i = 4; i < 8; i++){
+            u_trial[i] = u[i-4] + dt*k[i];
         }
 
-        error = 0.0f;
+        error = 0.0;
         [unroll]
         for(int i = 1; i < 4; i++){
             error += abs(u_trial[i] - u_euler[i]);
@@ -314,8 +308,11 @@ void ShootRay(inout Ray ray)
         if(error < tol || dt <= dt_min){
             time += dt;
             [unroll]
-            for(int i = 0; i < 8; i++){
-                ray.u[i] = u_trial[i];
+            for(int i = 0; i < 4; i++){
+                x[i] = u_trial[i];
+            }
+            for(int i = 4; i < 8; i++){
+                u[i-4] = u_trial[i];
             }
             if(4*error < tol){
                 dt = dt * 2;
@@ -328,13 +325,13 @@ void ShootRay(inout Ray ray)
     
 }
 
-float3 SampleBackground(Ray ray)
+float3 SampleBackground(float4 x_0, float4 x)
 {
     float deltaU[4];
     
     [unroll]
     for(int i = 0; i < 4; i++){
-        deltaU[i] = ray.u[i] - ray.u_0[i];
+        deltaU[i] = x[i] - x_0[i];
     }
 
     float distance = sqrt((deltaU[1] * deltaU[1]) + (deltaU[2] * deltaU[2])  + (deltaU[3] * deltaU[3]));
@@ -345,41 +342,101 @@ float3 SampleBackground(Ray ray)
     return _SkyboxTexture.SampleLevel(sampler_SkyboxTexture, float2(phi, theta), 0).xyz;
 }
 
-Ray CreateCameraRay(float2 uv) {
-  // Transform the camera origin to world space
-  float3 origin = mul(_CameraToWorld, float4(0.0f, 0.0f, 0.0f, 1.0f)).xyz;
+void SimpleShoot(inout float4 x, inout float4 u)
+{
 
-  // Invert the perspective projection of the view-space position
-  float3 direction = mul(_CameraInverseProjection, float4(uv, 0.0f, 1.0f)).xyz;
-  // Transform the direction from camera to world space and normalize
-  direction = mul(_CameraToWorld, float4(direction, 0.0f)).xyz;
-  direction = normalize(direction);
-  return CreateRay(origin, direction);
 }
 
-[numthreads(8, 8, 1)] void CSMain(uint3 id
-                                  : SV_DispatchThreadID) {
-  // Get the dimensions of the RenderTexture
-  uint width, height;
-  Result.GetDimensions(width, height);
-  // Transform pixel to [-1,1] range
-  float2 uv =
-      float2((id.xy + _PixelOffset) / float2(width, height) * 2.0f - 1.0f);
-  // Get a ray for the UVs
-  Ray ray = CreateCameraRay(uv);
+float3 SampleSimple(float4 x_0, float4 x)
+{
 
-  bool endMarch = false;
+}
 
-  while(!endMarch){
+// Check if geodesic inevitably crosses horizon
+bool HorizonCheck(float3 x, float3 u)
+{
+    // Check if inside of photon sphere
+    if (abs(x.x) < 1.5 * horizonRadius) {
+        return true;
+    }
 
-  ShootRay(ray);
+    // Break here if not doing thorough checking
+    if (!hardCheck) {
+        return false;
+    }
 
-  if((SquareRoot(((ray.u[1]*ray.u[1])+(ray.u[2]*ray.u[2])+(ray.u[3]*ray.u[3]), (ray.u[1]+ray.u[2]+ray.u[3])))>10.0f){
-        result = SampleBackground(ray);
-        Result[id.xy] = float4(result, 1);
-        endMarch = true;
-  }
-  }
+    // Check if stuck near poles
+    if (x.y < poleMargin * PI || (x.y > (1.0 - poleMargin) * PI))
+    {
+        return true;
+    }
+
+    // Check if stuck in orbit
+    if (abs(x.x) < 2.0 * horizonRadius) {
+
+        // Pre-calculate factors
+        float r = x.x;
+        float rs = horizonRadius;
+        float th = x.y;
+        float sth = sin(th);
+        float A = 1.0 - (rs / r);
+        float a = sqrt(A);
+
+        // Calculate motion constants
+        float E = sqrt((A * u.x * u.x) + (u.y * u.y / (r * r)) + (u.z * u.z / (r * r * sth * sth))) / a;
+        float C = u.z * u.z / (E * E);
+
+        // Check if geodesic originates inside of horizon
+        if (C > (27.0 / 4.0) * rs * rs) {
+            return true;
+        }
+        else {
+            return (x.x * u.x < 0.0);
+        }
+    }
+
+    // Otherwise, keep going
+    return false;
+}
+
+[numthreads(8, 8, 1)] void CSMain(uint3 id: SV_DispatchThreadID) {
+  void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // Break if already failed bounds check
+    if (isComplete[id.xy] == 1) { return; }
+
+    // Propagate ray
+    float4 x =  (0.0, Position[id.xy].y, Position[id.xy].z, Position[id.xy].w);
+    float4 u = (1.0, Direction[id.xy].y, Direction[id.xy].z, Direction[id.xy].w); //For this, we will have to write a function that gets the correct initial redshift (instead of 1.0).
+
+    float4 x_0 = x;
+
+    ShootRay(x, u);
+
+    // Check for horizon condition
+    if (HorizonCheck(x, u))
+    {
+        // Blend black with previous color
+        Color[id.xy] = Blend(Color[id.xy], float4(0.0, 0.0, 0.0, 1.0));
+
+        // Set complete flag
+        isComplete[id.xy] = 1;
+    }
+
+    // Check for escape condition
+    if (abs(x[1]) > escapeDistance * horizonRadius)
+    {
+        // Evaluate skybox texture
+        float3 skyboxColor = SampleBackground(x_0, x);
+
+    // Blend with previous color value
+        Color[id.xy] = Blend(Color[id.xy], skyboxColor);
+
+        // Set complete flag
+        isComplete[id.xy] = 1;
+    }
+
+    
 
   // Trace and shade
  // float3 result = float3(0, 0, 0);
