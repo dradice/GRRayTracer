@@ -45,25 +45,276 @@ float3 SampleBackground(float3 x, float3 x_0)
     return skyAlpha;
 }
 
+void flatChristoffel(float x, float y, float z, inout float4x4 Christoffel[4]){
+    
+    float horizonRadius = 1.0;
+    float rho = sqrt((x * x) + (y * y) + (z * z));
+    float rhoSquared = rho * rho;
+    float rhoSquareMinus = (rhoSquared - horizonRadius * horizonRadius);
+    float rhoMinus2 = (rho - horizonRadius);
+    float rhoPlus2 = (rho + horizonRadius);
+
+    float4x4 c0 = {
+        // {0, 2 * x * horizonRadius / (rho * rhoSquareMinus), 2 * y * horizonRadius / (rho * rhoSquareMinus),  2 * z * horizonRadius / (rho *  rhoSquareMinus)},
+        // {2 * x * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0},
+        // {2 * y * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0},
+        // {2 * z * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0}
+        {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0}
+    };
+    
+    float4x4 c1 = {
+        // { 2 * x * Pow3(rho) * (rhoMinus2) * horizonRadius / (Pow3(rhoPlus2)), 0, 0, 0},
+        // { 0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * z * horizonRadius / (rhoSquared * rhoPlus2)},
+        // { 0,  -2 * y * horizonRadius / (rhoSquared * rhoPlus2) / (rho * rho * rho * (rhoPlus2)), 2 * x * horizonRadius / (rhoSquared * rhoPlus2), 0},
+        // { 0, -2 * z * horizonRadius / (rhoSquared * rhoPlus2), 0, 2 * x * horizonRadius / (rhoSquared * rhoPlus2)}
+        {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0}
+    };
+
+    float4x4 c2 = {
+        // {2 * y * Pow2(rho) * (rhoMinus2) * horizonRadius / ((rhoPlus2)), 0, 0, 0},
+        // {0, 2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * x * horizonRadius / (rhoSquared * rhoPlus2), 0},
+        // {0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2), - 2 * z * horizonRadius / (rhoSquared * rhoPlus2)},
+        // {0, 0,  -2 * z * horizonRadius / (rhoSquared * rhoPlus2), 2 * y * horizonRadius / (rhoSquared * rhoPlus2)}
+        {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0}
+    };
+
+    float4x4 c3 = {
+        // {2 * z * Pow2(rho) * (rhoMinus2) * horizonRadius / (Pow7(rhoPlus2)), 0, 0, 0},
+        // {0, 2 * z * horizonRadius / (rhoSquared * rhoPlus2), 0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2)},
+        // {0, 0, 2 * z * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2)},
+        // {0,  -2 * x * horizonRadius / (rhoSquared * rhoPlus2),  -2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * z * horizonRadius / (rhoSquared * rhoPlus2)}
+        {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0},
+                {0.0, 0.0, 0.0, 0.0}
+    };
+
+    // Christoffel[0] = c0;
+    // Christoffel[1] = c1;
+    // Christoffel[2] = c2;
+    // Christoffel[3] = c3;
+    [unroll]
+    for(int a = 0; a < 4; a++){
+        for(int b = 0; b < 4; b++){
+            Christoffel[0][a][b] = c0[a][b];
+            Christoffel[1][a][b] = c1[a][b];
+            Christoffel[2][a][b] = c2[a][b];
+            Christoffel[3][a][b] = c3[a][b];
+        }
+    }
+    
+
+    // Christoffel = {
+    //     {
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0}
+    //     },
+              
+    //     {
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0}
+    //     },
+               
+    //     {
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0}
+    //     },
+
+    //     {
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0},
+    //             {0.0, 0.0, 0.0, 0.0}
+    //     }
+    // };
+
+    // Christoffel[][0][0] =
+    // {{0.0, 0.0, 0.0, 0.0}};
+
+    // Christoffel[0] = 
+    //     {
+                // {0, 2 * x * horizonRadius / (rho * rhoSquareMinus), 2 * y * horizonRadius / (rho * rhoSquareMinus),  2 * z * horizonRadius / (rho *  rhoSquareMinus)},
+                // {2 * x * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0},
+                // {2 * y * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0},
+                // {2 * z * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0}
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0}
+        // };
+    // Christoffel[1] = 
+    //     {
+                // { 2 * x * Pow3(rho) * (rhoMinus2) * horizonRadius / (Pow3(rhoPlus2)), 0, 0, 0},
+                // { 0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * z * horizonRadius / (rhoSquared * rhoPlus2)},
+                // { 0,  -2 * y * horizonRadius / (rhoSquared * rhoPlus2) / (rho * rho * rho * (rhoPlus2)), 2 * x * horizonRadius / (rhoSquared * rhoPlus2), 0},
+                // { 0, -2 * z * horizonRadius / (rhoSquared * rhoPlus2), 0, 2 * x * horizonRadius / (rhoSquared * rhoPlus2)}
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0}
+        // };
+
+    // Christoffel[2] = 
+    //     {
+                // {2 * y * Pow2(rho) * (rhoMinus2) * horizonRadius / ((rhoPlus2)), 0, 0, 0},
+                // {0, 2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * x * horizonRadius / (rhoSquared * rhoPlus2), 0},
+                // {0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2), - 2 * z * horizonRadius / (rhoSquared * rhoPlus2)},
+                // {0, 0,  -2 * z * horizonRadius / (rhoSquared * rhoPlus2), 2 * y * horizonRadius / (rhoSquared * rhoPlus2)}
+                // {0.0, 0.0, 0.0, 0.0},
+                // {0.0, 0.0, 0.0, 0.0},
+                // {0.0, 0.0, 0.0, 0.0},
+                // {0.0, 0.0, 0.0, 0.0}
+        // };
+
+    // Christoffel[3] = 
+    //     {
+                // {2 * z * Pow2(rho) * (rhoMinus2) * horizonRadius / (Pow7(rhoPlus2)), 0, 0, 0},
+                // {0, 2 * z * horizonRadius / (rhoSquared * rhoPlus2), 0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2)},
+                // {0, 0, 2 * z * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2)},
+                // {0,  -2 * x * horizonRadius / (rhoSquared * rhoPlus2),  -2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * z * horizonRadius / (rhoSquared * rhoPlus2)}
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0},
+        //         {0.0, 0.0, 0.0, 0.0}
+        // };
+
+
+    }
+
+    void ShootChristoffel(inout float dt, inout float4 x, inout float4 u)
+{ //this function shoots rays in the direction they originate from until they reach a certain distance (int count is incremented to maximum amount)
+
+    float k[8];
+
+    float u_star[8];
+
+    float u_euler[8];
+
+    float error;
+
+    float tol = 0.5f;
+
+    float u_trial[8];
+
+    float dt_min = 1e-10;
+
+    float4x4 Christoffel[4];
+    
+        flatChristoffel(x[1], x[2], x[3], Christoffel);
+  
+        [unroll]
+        for(int a = 0; a < 4; a++){
+            k[a] = -u[a];
+            k[a + 4] = 0.0;
+       
+            for(int b = 0; b < 4; b++){
+            
+                for(int c = 0; c < 4; c++){
+                    k[a + 4] += (Christoffel[a])[b][c] * u[b] * u[c];
+                }
+            }
+        }
+            
+     
+        
+
+        [unroll]
+        for(int i = 0; i < 4; i++){
+            u_star[i] = x[i] + (0.5)*dt*k[i];
+            u_euler[i] = x[i] + dt*k[i];
+        }
+
+        [unroll]
+        for(int i = 4; i < 8; i++){
+            u_star[i] = u[i - 4] + (0.5)*dt*k[i];
+            u_euler[i] = u[i - 4] + dt*k[i];
+        }
+
+        flatChristoffel(u_star[1], u_star[2], u_star[3], Christoffel);
+  
+        [unroll]
+        for(int a = 0; a < 4; a++){
+            k[a] = -u_star[a+4];
+            k[a + 4] = 0.0;
+   
+            for(int b = 0; b < 4; b++){
+    
+                for(int c = 0; c < 4; c++){
+                    k[a + 4] += (Christoffel[a])[b][c] * u_star[b + 4] * u_star[c + 4];
+                }
+            }
+        }
+        
+        [unroll]
+        for(int i = 0; i < 4; i++){
+            u_trial[i] = x[i] + dt*k[i];
+        }
+        [unroll]
+        for(int i = 4; i < 8; i++){
+            u_trial[i] = u[i-4] + dt*k[i];
+        }
+
+        error = 0.0;
+        [unroll]
+        for(int i = 1; i < 4; i++){
+            error += abs(u_trial[i] - u_euler[i]);
+        }
+
+        if(error < tol || dt <= dt_min){
+            [unroll]
+            for(int i = 0; i < 4; i++){
+                x[i] = u_trial[i];
+            }
+            for(int i = 4; i < 8; i++){
+                u[i-4] = u_trial[i];
+            }
+            if(4*error < tol){
+                dt = dt * 2;
+            }
+        }
+        else{
+            dt = 0.5f * dt;
+        }
+       
+    
+}
+
+
+
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     // Break if already failed bounds check
     if (isComplete[id.xy] == 1) { return; }
-    float3 x = Position[id.xy].xyz;
-    float t = Position[id.xy].w;
+    float4 x = Position[id.xy].xyzw;
+    float t = Position[id.xy].x;
     float3 camPos = x;
-    float3 u = Direction[id.xy].xyz;
+    float4 u = Direction[id.xy].xyzw;
     float dt = 0.1;
 
-    SimpleShoot(dt, x, u);
+    ShootChristoffel(dt, x, u);
 
     // Write back position and direction
     t += dt;
-    Position[id.xy]  = float4(x.xyz, t);
-    Direction[id.xy] = float4(u.xyz, 0.0);
+    Position[id.xy]  = x;
+    Direction[id.xy] = u;
 
-    float dist = sqrt((x.x*x.x) + (x.y*x.y) + (x.z*x.z));
+    float dist = sqrt((x.y*x.y) + (x.z*x.z) + (x.w*x.w));
 
     if(abs(dist) > 10.0)
     {
