@@ -1,0 +1,79 @@
+// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+
+// Constants
+static const float PI = 3.14159265f;
+
+// Output parameters
+RWTexture2D<float4> Position;
+RWTexture2D<float4> Direction;
+RWTexture2D<float4> Color;
+RWTexture2D<int> isComplete;
+
+// Input textures
+Texture2D<float4> _SkyboxTexture;
+
+// Step size parameters
+float timeStep;
+
+// Samplers
+SamplerState sampler_SkyboxTexture;
+
+void SimpleShoot(float tStep, inout float3 x, inout float3 u)
+{
+    for(int i = 0; i < 3; i++)
+    {
+        x[i] += u[i] * tStep;
+    }
+}
+
+// Blend transparency and background colors
+float4 Blend(float4 foreColor, float4 backColor)
+{
+    // Blend using previous color's alpha
+    //float4 outColor = foreColor + backColor * (1.0 - foreColor.w);
+    float4 outColor = foreColor + backColor;
+    return outColor;
+}
+
+float3 SampleBackground(float3 x, float3 x_0)
+{
+    float dist = sqrt(((x[0] - x_0[0]) * (x[0] - x_0[0])) + ((x[1] - x_0[1]) * (x[1] - x_0[1])) + ((x[2] - x_0[2]) * (x[2] - x_0[2])));
+    float theta = (acos((x[1] - x_0[1]) / dist)) / -PI;
+    float phi = atan2((x[0] - x_0[0]), -(x[2] - x_0[2])) / -PI * 0.5f;
+    float3 skyAlpha = _SkyboxTexture.SampleLevel(sampler_SkyboxTexture, float2(phi, theta), 0).xyz;
+    return skyAlpha;
+}
+
+[numthreads(8,8,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    // Break if already failed bounds check
+    if (isComplete[id.xy] == 1) { return; }
+    float3 x = Position[id.xy].xyz;
+    float t = Position[id.xy].w;
+    float3 camPos = x;
+    float3 u = Direction[id.xy].xyz;
+    float dt = 0.1;
+
+    SimpleShoot(dt, x, u);
+
+    // Write back position and direction
+    t += dt;
+    Position[id.xy]  = float4(x.xyz, t);
+    Direction[id.xy] = float4(u.xyz, 0.0);
+
+    float dist = sqrt((x.x*x.x) + (x.y*x.y) + (x.z*x.z));
+
+    if(abs(dist) > 10.0)
+    {
+        float4 skyboxColor = float4(SampleBackground(x, camPos), 1.0);
+        // Blend with previous color value
+        Color[id.xy] = Blend(Color[id.xy], skyboxColor);
+
+        // Set complete flag
+        isComplete[id.xy] = 1;
+    }
+
+
+}
