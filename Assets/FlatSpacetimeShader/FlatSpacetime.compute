@@ -19,8 +19,16 @@ float timeStep;
 // Samplers
 SamplerState sampler_SkyboxTexture;
 
-// Physical parameters 
-float horizonRadius;
+// Physical parameters
+float horizonRadius = 10.0;
+
+void SimpleShoot(float tStep, inout float3 x, inout float3 u)
+{
+    for(int i = 0; i < 3; i++)
+    {
+        x[i] += u[i] * tStep;
+    }
+}
 
 // Blend transparency and background colors
 float4 Blend(float4 foreColor, float4 backColor)
@@ -55,41 +63,35 @@ float Pow3(float input)
     return input * input * input;
 }
 
-    void SchwarzchildChristoffel(float x, float y, float z, inout float4x4 Christoffel[4]){
-
-    float horizonRadius = 0.5;
-    float rho = sqrt((x * x) + (y * y) + (z * z));
-    float rhoSquared = rho * rho;
-    float rhoSquareMinus = (rhoSquared - (horizonRadius * horizonRadius));
-    float rhoMinus2 = (rho - horizonRadius);
-    float rhoPlus2 = (rho + horizonRadius);
-
+void FlatChristoffel(float x, float y, float z, inout float4x4 Christoffel[4]){
+    
     float4x4 c0 = {
-        {0, 2 * x * horizonRadius / (rho * rhoSquareMinus), 2 * y * horizonRadius / (rho * rhoSquareMinus),  2 * z * horizonRadius / (rho *  rhoSquareMinus)},
-        {2 * x * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0},
-        {2 * y * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0},
-        {2 * z * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0}
+        {0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0}
     };
     
     float4x4 c1 = {
-        { 2 * x * Pow3(rho) * (rhoMinus2) * horizonRadius / (Pow3(rhoPlus2)), 0, 0, 0},
-        { 0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * z * horizonRadius / (rhoSquared * rhoPlus2)},
-        { 0,  -2 * y * horizonRadius / (rhoSquared * rhoPlus2) / (rho * rho * rho * (rhoPlus2)), 2 * x * horizonRadius / (rhoSquared * rhoPlus2), 0},
-        { 0, -2 * z * horizonRadius / (rhoSquared * rhoPlus2), 0, 2 * x * horizonRadius / (rhoSquared * rhoPlus2)}
+        {0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0}
     };
 
     float4x4 c2 = {
-        {2 * y * Pow2(rho) * (rhoMinus2) * horizonRadius / ((rhoPlus2)), 0, 0, 0},
-        {0, 2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * x * horizonRadius / (rhoSquared * rhoPlus2), 0},
-        {0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2), - 2 * z * horizonRadius / (rhoSquared * rhoPlus2)},
-        {0, 0,  -2 * z * horizonRadius / (rhoSquared * rhoPlus2), 2 * y * horizonRadius / (rhoSquared * rhoPlus2)}
+
+        {0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0}
     };
 
     float4x4 c3 = {
-        {2 * z * Pow2(rho) * (rhoMinus2) * horizonRadius / (Pow7(rhoPlus2)), 0, 0, 0},
-        {0, 2 * z * horizonRadius / (rhoSquared * rhoPlus2), 0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2)},
-        {0, 0, 2 * z * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2)},
-        {0,  -2 * x * horizonRadius / (rhoSquared * rhoPlus2),  -2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * z * horizonRadius / (rhoSquared * rhoPlus2)}
+        {0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0},
+        {0.0, 0.0, 0.0, 0.0}
     };
 
     [unroll]
@@ -104,7 +106,7 @@ float Pow3(float input)
 }
 
 
-    void ShootRay(inout float dt, inout float4 x, inout float4 u)
+    void ShootChristoffel(inout float dt, inout float4 x, inout float4 u)
 { //this function shoots rays in the direction they originate from until they reach a certain distance (int count is incremented to maximum amount)
 
     float k[8];
@@ -123,7 +125,7 @@ float Pow3(float input)
 
     float4x4 Christoffel[4];
     
-        SchwarzchildChristoffel(x[1], x[2], x[3], Christoffel);
+        FlatChristoffel(x[1], x[2], x[3], Christoffel);
   
         [unroll]
         for(int a = 0; a < 4; a++){
@@ -153,7 +155,7 @@ float Pow3(float input)
             u_euler[i] = u[i - 4] + dt*k[i];
         }
 
-        SchwarzchildChristoffel(u_star[1], u_star[2], u_star[3], Christoffel);
+        FlatChristoffel(u_star[1], u_star[2], u_star[3], Christoffel);
   
         [unroll]
         for(int a = 0; a < 4; a++){
@@ -197,8 +199,12 @@ float Pow3(float input)
         }
         else{
             dt = 0.5f * dt;
-        }   
+        }
+       
+    
 }
+
+
 
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
@@ -211,7 +217,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float4 u = Direction[id.xy].xyzw;
     float dt = 0.1;
 
-    ShootRay(dt, x, u);
+    ShootChristoffel(dt, x, u);
 
     // Write back position and direction
     t += dt;
@@ -220,8 +226,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     float dist = sqrt((x[1]*x[1]) + (x[2]*x[2]) + (x[3]*x[3]));
 
-
-    if(abs(dist) < horizonRadius)
+    if(abs(dist) < 0.5)
     {
         // Blend black with previous color
         Color[id.xy] = Blend(Color[id.xy], float4(0.0, 0.0, 0.0, 1.0));
@@ -229,6 +234,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         // Set complete flag
         isComplete[id.xy] = 1;
     }
+    
     if(abs(dist) > 100.0)
     {
         float4 skyboxColor = float4(SampleBackground(x, camPos), 1.0);
@@ -238,7 +244,6 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         // Set complete flag
         isComplete[id.xy] = 1;
     }
-    
 
 
 }
