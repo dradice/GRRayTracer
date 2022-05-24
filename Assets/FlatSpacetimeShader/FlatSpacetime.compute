@@ -42,7 +42,7 @@ float4 Blend(float4 foreColor, float4 backColor)
 float3 SampleBackground(float4 x, float3 x_0)
 {
     float dist = sqrt(((x[1] - x_0[0]) * (x[1] - x_0[0])) + ((x[2] - x_0[1]) * (x[2] - x_0[1])) + ((x[3] - x_0[2]) * (x[3] - x_0[2])));
-    float theta = (acos((x[2] - x_0[1]) / dist)) / PI;
+    float theta = (acos((x[2] - x_0[1]) / dist)) / -PI;
     float phi = atan2((x[1] - x_0[0]), -(x[3] - x_0[2])) / PI * 0.5f;
     float3 skyAlpha = _SkyboxTexture.SampleLevel(sampler_SkyboxTexture, float2(phi, theta), 0).xyz;
     return skyAlpha;
@@ -185,6 +185,7 @@ void FlatChristoffel(float x, float y, float z, inout float4x4 Christoffel[4]){
             error += abs(u_trial[i] - u_euler[i]);
         }
 
+        
         if(error < tol || dt <= dt_min){
             [unroll]
             for(int i = 0; i < 4; i++){

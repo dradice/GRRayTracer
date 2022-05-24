@@ -9,12 +9,13 @@ RWTexture2D<float4> Position;
 RWTexture2D<float4> Direction;
 RWTexture2D<float4> Color;
 RWTexture2D<int> isComplete;
+RWTexture2D<float> TimeStep;
 
 // Input textures
 Texture2D<float4> _SkyboxTexture;
 
 // Step size parameters
-float timeStep;
+//float timeStep;
 
 // Samplers
 SamplerState sampler_SkyboxTexture;
@@ -34,7 +35,7 @@ float4 Blend(float4 foreColor, float4 backColor)
 float3 SampleBackground(float4 x, float3 x_0)
 {
     float dist = sqrt(((x[1] - x_0[0]) * (x[1] - x_0[0])) + ((x[2] - x_0[1]) * (x[2] - x_0[1])) + ((x[3] - x_0[2]) * (x[3] - x_0[2])));
-    float theta = (acos((x[2] - x_0[1]) / dist)) / PI;
+    float theta = (acos((x[2] - x_0[1]) / dist)) / -PI;
     float phi = atan2((x[1] - x_0[0]), -(x[3] - x_0[2])) / PI * 0.5f;
     float3 skyAlpha = _SkyboxTexture.SampleLevel(sampler_SkyboxTexture, float2(phi, theta), 0).xyz;
     return skyAlpha;
@@ -103,8 +104,19 @@ float Pow3(float input)
     }
 }
 
+// bool distCheck(float3 x)
+// {
+//     if (sqrt((x[1]*x[1]) + (x[2]*x[2]) + (x[3]*x[3]));)
+//     {
+//         return true;
+//     }
+//     else{
+//         return false;
+//     }
+// }
 
-    void ShootRay(inout float dt, inout float4 x, inout float4 u)
+
+    bool ShootRay(inout float dt, inout float4 x, inout float4 u)
 { //this function shoots rays in the direction they originate from until they reach a certain distance (int count is incremented to maximum amount)
 
     float k[8];
@@ -115,16 +127,22 @@ float Pow3(float input)
 
     float error;
 
-    float tol = 0.5f;
+    float tol = 0.1;
 
     float u_trial[8];
 
     float dt_min = 1e-10;
 
     float4x4 Christoffel[4];
-    
+
+    bool isGood = false;
+
+
         SchwarzchildChristoffel(x[1], x[2], x[3], Christoffel);
+        
+        
   
+    
         [unroll]
         for(int a = 0; a < 4; a++){
             k[a] = -u[a];
@@ -184,6 +202,7 @@ float Pow3(float input)
         }
 
         if(error < tol || dt <= dt_min){
+            isGood = true;
             [unroll]
             for(int i = 0; i < 4; i++){
                 x[i] = u_trial[i];
@@ -192,12 +211,17 @@ float Pow3(float input)
                 u[i-4] = u_trial[i];
             }
             if(4*error < tol){
-                dt = dt * 2;
+                dt = dt * 2.0;
             }
         }
-        else{
-            dt = 0.5f * dt;
-        }   
+        else if(error > tol)
+        {
+
+            dt *= 0.5;
+        } 
+        return isGood;  
+    
+    
 }
 
 [numthreads(8,8,1)]
@@ -209,26 +233,33 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float t = Position[id.xy].x;
     float3 camPos = x.yzw;
     float4 u = Direction[id.xy].xyzw;
-    float dt = 0.1;
+    float dt = TimeStep[id.xy].x;
 
-    ShootRay(dt, x, u);
+    bool isGood = ShootRay(dt, x, u);
+
+    
 
     // Write back position and direction
-    t += dt;
-    Position[id.xy]  = x;
-    Direction[id.xy] = u;
+    TimeStep[id.xy] = dt;
+    if(isGood)
+    {
+        t += dt;
+        Position[id.xy]  = x;
+        Direction[id.xy] = u;
+    }
 
     float dist = sqrt((x[1]*x[1]) + (x[2]*x[2]) + (x[3]*x[3]));
 
 
-    if(abs(dist) < horizonRadius)
+    if(abs(dist) < 0.5)
     {
         // Blend black with previous color
-        Color[id.xy] = Blend(Color[id.xy], float4(0.0, 0.0, 0.0, 1.0));
+        Color[id.xy] = Blend(Color[id.xy], float4(0.0, 0.0, 0.0, 0.0));
 
         // Set complete flag
         isComplete[id.xy] = 1;
     }
+
     if(abs(dist) > 100.0)
     {
         float4 skyboxColor = float4(SampleBackground(x, camPos), 1.0);

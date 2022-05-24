@@ -6,6 +6,7 @@ RWTexture2D<float4> Position;
 RWTexture2D<float4> Direction;
 RWTexture2D<float4> Color;
 RWTexture2D<int> isComplete;
+RWTexture2D<float> TimeStep;
 
 // Input parameters
 float4x4 _CameraToWorld;
@@ -34,7 +35,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     // Pass direction to result
     Position[id.xy] = float4(0.0, _CameraPositionCartesian);
-    Direction[id.xy] = float4(0.0, direction);
+    Direction[id.xy] = float4(0.0, -direction);
     Color[id.xy] = float4(0.0, 0.0, 0.0, 0.0);
     isComplete[id.xy] = 0;
+    TimeStep[id.xy] = 1e-10;
 }

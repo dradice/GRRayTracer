@@ -31,6 +31,8 @@ public class RayTraceCameraBHVR : MonoBehaviour
     private RenderTexture _direction;
     private RenderTexture _color;
     private RenderTexture _isComplete;
+    private RenderTexture _timeStep;
+    private RenderTexture _errorTolerance;
 
     // Private variables
     private float
@@ -60,6 +62,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
         SetupTexture(ref _direction, RenderTextureFormat.ARGBFloat, overSample * Screen.width, overSample * Screen.height);
         SetupTexture(ref _color, RenderTextureFormat.ARGBFloat, overSample * Screen.width, overSample * Screen.height);
         SetupTexture(ref _isComplete, RenderTextureFormat.RInt, overSample * Screen.width, overSample * Screen.height);
+        SetupTexture(ref _timeStep, RenderTextureFormat.RFloat, overSample * Screen.width, overSample * Screen.height);
     }
 
     private void SetupTexture(ref RenderTexture texture, RenderTextureFormat format, int width, int height)
@@ -95,7 +98,6 @@ public class RayTraceCameraBHVR : MonoBehaviour
 
         // Send render parameters to update shader
         rayUpdateShader.SetTexture(0, "_SkyboxTexture", skyboxTexture);
-        rayUpdateShader.SetFloat("timeStep", timeStep);
         rayUpdateShader.SetFloat("escapeDistance", escapeDistance);
         rayUpdateShader.SetFloat("time", coordinateTime);
     }
@@ -170,6 +172,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
         cameraVectorShader.SetTexture(0, "Direction", _direction);
         cameraVectorShader.SetTexture(0, "Color", _color);
         cameraVectorShader.SetTexture(0, "isComplete", _isComplete);
+        cameraVectorShader.SetTexture(0, "TimeStep", _timeStep);
         int threadGroupsX = Mathf.CeilToInt(overSample * Screen.width / numThreads);
         int threadGroupsY = Mathf.CeilToInt(overSample * Screen.height / numThreads);
         cameraVectorShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
@@ -183,6 +186,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
         rayUpdateShader.SetTexture(0, "Direction", _direction);
         rayUpdateShader.SetTexture(0, "Color", _color);
         rayUpdateShader.SetTexture(0, "isComplete", _isComplete);
+        rayUpdateShader.SetTexture(0, "TimeStep", _timeStep);
         int threadGroupsX = Mathf.CeilToInt(overSample * Screen.width / numThreads);
         int threadGroupsY = Mathf.CeilToInt(overSample * Screen.height / numThreads);
         rayUpdateShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
