@@ -10,6 +10,7 @@ RWTexture2D<float4> Direction;
 RWTexture2D<float4> Color;
 RWTexture2D<int> isComplete;
 RWTexture2D<float> TimeStep;
+RWTexture2D<float> ErrorTolerance;
 
 // Input textures
 Texture2D<float4> _SkyboxTexture;
@@ -116,7 +117,7 @@ float Pow3(float input)
 // }
 
 
-    bool ShootRay(inout float dt, inout float4 x, inout float4 u)
+    bool ShootRay(inout float dt, float tol, inout float4 x, inout float4 u)
 { //this function shoots rays in the direction they originate from until they reach a certain distance (int count is incremented to maximum amount)
 
     float k[8];
@@ -126,8 +127,6 @@ float Pow3(float input)
     float u_euler[8];
 
     float error;
-
-    float tol = 0.1;
 
     float u_trial[8];
 
@@ -234,8 +233,9 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float3 camPos = x.yzw;
     float4 u = Direction[id.xy].xyzw;
     float dt = TimeStep[id.xy].x;
+    float tol = ErrorTolerance[id.xy].x;
 
-    bool isGood = ShootRay(dt, x, u);
+    bool isGood = ShootRay(dt, tol, x, u);
 
     
 

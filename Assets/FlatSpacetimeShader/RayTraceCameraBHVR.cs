@@ -15,6 +15,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
     [Header("Step Size Parameters")]
     public float timeStep = 0.001f;
     public float escapeDistance = 10000f;
+    public float errorTolerance = 0.001f;
 
     [Header("Renderer Settings")]
     public int numFrames = 60;
@@ -63,6 +64,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
         SetupTexture(ref _color, RenderTextureFormat.ARGBFloat, overSample * Screen.width, overSample * Screen.height);
         SetupTexture(ref _isComplete, RenderTextureFormat.RInt, overSample * Screen.width, overSample * Screen.height);
         SetupTexture(ref _timeStep, RenderTextureFormat.RFloat, overSample * Screen.width, overSample * Screen.height);
+        SetupTexture(ref _errorTolerance, RenderTextureFormat.RFloat, overSample * Screen.width, overSample * Screen.height);
     }
 
     private void SetupTexture(ref RenderTexture texture, RenderTextureFormat format, int width, int height)
@@ -94,12 +96,15 @@ public class RayTraceCameraBHVR : MonoBehaviour
         cameraVectorShader.SetMatrix("_CameraToWorld", _camera.cameraToWorldMatrix);
         cameraVectorShader.SetMatrix("_CameraInverseProjection", _camera.projectionMatrix.inverse);
         cameraVectorShader.SetVector("_CameraPositionCartesian", cart);
+        cameraVectorShader.SetFloat("timeStep", timeStep);
+        cameraVectorShader.SetFloat("errorTolerance", errorTolerance);
 
 
         // Send render parameters to update shader
         rayUpdateShader.SetTexture(0, "_SkyboxTexture", skyboxTexture);
         rayUpdateShader.SetFloat("escapeDistance", escapeDistance);
         rayUpdateShader.SetFloat("time", coordinateTime);
+
     }
 
     private void OnRenderImage(RenderTexture source, RenderTexture destination)
@@ -173,6 +178,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
         cameraVectorShader.SetTexture(0, "Color", _color);
         cameraVectorShader.SetTexture(0, "isComplete", _isComplete);
         cameraVectorShader.SetTexture(0, "TimeStep", _timeStep);
+        cameraVectorShader.SetTexture(0, "ErrorTolerance", _errorTolerance);
         int threadGroupsX = Mathf.CeilToInt(overSample * Screen.width / numThreads);
         int threadGroupsY = Mathf.CeilToInt(overSample * Screen.height / numThreads);
         cameraVectorShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
@@ -187,6 +193,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
         rayUpdateShader.SetTexture(0, "Color", _color);
         rayUpdateShader.SetTexture(0, "isComplete", _isComplete);
         rayUpdateShader.SetTexture(0, "TimeStep", _timeStep);
+        rayUpdateShader.SetTexture(0, "ErrorTolerance", _errorTolerance);
         int threadGroupsX = Mathf.CeilToInt(overSample * Screen.width / numThreads);
         int threadGroupsY = Mathf.CeilToInt(overSample * Screen.height / numThreads);
         rayUpdateShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
