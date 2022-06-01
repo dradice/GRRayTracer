@@ -365,7 +365,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 66
+  field of view: 60
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -390,13 +390,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 963194225}
-  m_LocalRotation: {x: -0, y: -0.99894816, z: -0, w: 0.045854688}
-  m_LocalPosition: {x: 1.1, y: 0, z: 11.1}
+  m_LocalRotation: {x: 0.032930348, y: 0.8416167, z: -0.051649697, w: 0.5365905}
+  m_LocalPosition: {x: -18.3, y: 2, z: 8.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: -174.744, z: 0}
+  m_LocalEulerAnglesHint: {x: 7.024, y: 114.959, z: 0}
 --- !u!114 &963194229
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -411,10 +411,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
-  skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
-  timeStep: 0.000001
+  skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
+  timeStep: 0.0001
   escapeDistance: 10000
-  errorTolerance: 10
+  errorTolerance: 0.00001
   numFrames: 60
   framesPerSecond: 30
   updateInterval: 5
@@ -422,6 +422,8 @@ MonoBehaviour:
   maxSoftPasses: 5000
   maxPasses: 10000
   exitOnComplete: 0
+  diskRadius: 7
+  horizonRadius: 0.6
 --- !u!114 &963194230
 MonoBehaviour:
   m_ObjectHideFlags: 0

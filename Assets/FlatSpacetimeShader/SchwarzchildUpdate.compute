@@ -23,6 +23,7 @@ SamplerState sampler_SkyboxTexture;
 
 // Physical parameters 
 float horizonRadius;
+float diskRadius;
 
 // Blend transparency and background colors
 float4 Blend(float4 foreColor, float4 backColor)
@@ -59,7 +60,6 @@ float Pow3(float input)
 
     void SchwarzchildChristoffel(float x, float y, float z, inout float4x4 Christoffel[4]){
 
-    float horizonRadius = 0.5;
     float rho = sqrt((x * x) + (y * y) + (z * z));
     float rhoSquared = rho * rho;
     float rhoSquareMinus = (rhoSquared - (horizonRadius * horizonRadius));
@@ -104,18 +104,6 @@ float Pow3(float input)
         }
     }
 }
-
-// bool distCheck(float3 x)
-// {
-//     if (sqrt((x[1]*x[1]) + (x[2]*x[2]) + (x[3]*x[3]));)
-//     {
-//         return true;
-//     }
-//     else{
-//         return false;
-//     }
-// }
-
 
     bool ShootRay(inout float dt, float tol, inout float4 x, inout float4 u)
 { //this function shoots rays in the direction they originate from until they reach a certain distance (int count is incremented to maximum amount)
@@ -223,6 +211,39 @@ float Pow3(float input)
     
 }
 
+bool diskHit(float4 x, float dist)
+{
+    float thickness = 0.01;
+    if(abs(x[2]) < thickness && dist < diskRadius && dist > horizonRadius)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+float Fract(float n)
+{
+    int nInt = (int)n;
+    return n - abs(nInt);
+}
+
+float Random(float2 xz) 
+{
+    return Fract(sin(dot(xz, (12.9898,78.233))) * 43758.5453123);
+}
+
+float DiskNoise(float4 x)
+{
+    float rad = sqrt((x[1] * x[1]) + (x[3] * x[3]));
+    // float intensity = sin((PI * rad) / diskRadius);
+    // return Random((x[1], x[3])) * intensity;
+    return abs(sin(PI * rad / diskRadius)* (0.01 + sin((PI * rad * 7.0) / diskRadius)));
+    
+}
+
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
@@ -235,9 +256,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float dt = TimeStep[id.xy].x;
     float tol = ErrorTolerance[id.xy].x;
 
-    bool isGood = ShootRay(dt, tol, x, u);
-
-    
+    bool isGood = ShootRay(dt, tol, x, u);   
 
     // Write back position and direction
     TimeStep[id.xy] = dt;
@@ -250,6 +269,15 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     float dist = sqrt((x[1]*x[1]) + (x[2]*x[2]) + (x[3]*x[3]));
 
+    bool hitDisk = diskHit(x, dist);
+
+    float noise = DiskNoise(x);
+
+    if(hitDisk)
+    {
+        Color[id.xy] = Blend(Color[id.xy], noise * float4(0.08, 0.04, 0.01, 1.0));
+       
+    }
 
     if(abs(dist) < 0.5)
     {
@@ -260,7 +288,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         isComplete[id.xy] = 1;
     }
 
-    if(abs(dist) > 100.0)
+    if(abs(dist) > 1000.0)
     {
         float4 skyboxColor = float4(SampleBackground(x, camPos), 1.0);
         // Blend with previous color value

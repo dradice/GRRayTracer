@@ -26,6 +26,11 @@ public class RayTraceCameraBHVR : MonoBehaviour
     public int maxPasses = 10000;
     public bool exitOnComplete = false;
 
+    [Header("Physical Parameters")]
+    public float diskRadius = 3.0f;
+    public float horizonRadius = 0.5f;
+
+
     //Private objects
     private Camera _camera;
     private RenderTexture _position;
@@ -98,12 +103,15 @@ public class RayTraceCameraBHVR : MonoBehaviour
         cameraVectorShader.SetVector("_CameraPositionCartesian", cart);
         cameraVectorShader.SetFloat("timeStep", timeStep);
         cameraVectorShader.SetFloat("errorTolerance", errorTolerance);
+        cameraVectorShader.SetFloat("horizonRadius", horizonRadius);
 
 
         // Send render parameters to update shader
         rayUpdateShader.SetTexture(0, "_SkyboxTexture", skyboxTexture);
         rayUpdateShader.SetFloat("escapeDistance", escapeDistance);
         rayUpdateShader.SetFloat("time", coordinateTime);
+        rayUpdateShader.SetFloat("diskRadius", diskRadius);
+        rayUpdateShader.SetFloat("horizonRadius", horizonRadius);
 
     }
 

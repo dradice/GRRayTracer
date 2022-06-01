@@ -15,6 +15,7 @@ float4x4 _CameraInverseProjection;
 float3 _CameraPositionCartesian;
 float timeStep;
 float errorTolerance;
+float horizonRadius;
 
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
