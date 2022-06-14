@@ -61,38 +61,72 @@ float Pow3(float input)
     void SchwarzchildChristoffel(float x, float y, float z, inout float4x4 Christoffel[4]){
 
     float rho = sqrt((x * x) + (y * y) + (z * z));
-    float rhoSquared = rho * rho;
-    float rhoSquareMinus = (rhoSquared - (horizonRadius * horizonRadius));
-    float rhoMinus2 = (rho - horizonRadius);
-    float rhoPlus2 = (rho + horizonRadius);
-
-    float4x4 c0 = {
-        {0, 2 * x * horizonRadius / (rho * rhoSquareMinus), 2 * y * horizonRadius / (rho * rhoSquareMinus),  2 * z * horizonRadius / (rho *  rhoSquareMinus)},
-        {2 * x * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0},
-        {2 * y * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0},
-        {2 * z * horizonRadius / (rho * rhoSquareMinus), 0, 0, 0}
-    };
+    float rho_s = horizonRadius;
     
-    float4x4 c1 = {
-        { 2 * x * Pow3(rho) * (rhoMinus2) * horizonRadius / (Pow3(rhoPlus2)), 0, 0, 0},
-        { 0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * z * horizonRadius / (rhoSquared * rhoPlus2)},
-        { 0,  -2 * y * horizonRadius / (rhoSquared * rhoPlus2) / (rho * rho * rho * (rhoPlus2)), 2 * x * horizonRadius / (rhoSquared * rhoPlus2), 0},
-        { 0, -2 * z * horizonRadius / (rhoSquared * rhoPlus2), 0, 2 * x * horizonRadius / (rhoSquared * rhoPlus2)}
+    float a = (rho - rho_s);
+    float b = Pow7(rho + rho_s);
+    float c = Pow3(rho);
+    float d = 1 + (rho_s / rho);
+    float e = (1 - Pow2(rho_s / rho));
+
+    float g_xtt = (2 * c * rho_s * a * x) / (b);
+    float g_ytt = (2 * c * rho_s * a * y) / (b);
+    float g_ztt = (2 * c * rho_s * a * z) / (b);
+
+    float g_ttx = (2 * rho_s * x) / (c * e);
+    float g_tty = (2 * rho_s * y) / (c * e);
+    float g_ttz = (2 * rho_s * z) / (c * e);
+
+    float g_xxx = -(2 * rho_s * x) / (c * d);
+    float g_yxy = g_xxx;
+    float g_zxz = g_xxx;
+    float g_xyy = -g_xxx;
+    float g_xzz = -g_xxx;
+
+    float g_yxx = (2 * rho_s * y) / (c * d);
+    float g_xxy = -g_yxx;
+    float g_yyy = -g_yxx;
+    float g_zyz = -g_yxx;
+    float g_yzz = g_yxx;
+
+    float g_zxx = (2 * rho_s * z) / (c * d);
+    float g_xxz = -g_zxx;
+    float g_zyy = g_zxx;
+    float g_yyz = -g_zxx;
+    float g_zzz = -g_zxx;
+
+    float4x4 c0 =
+    {
+        {0, g_ttx, g_tty, g_ttz},
+        {g_ttx, 0, 0, 0},
+        {g_tty, 0, 0, 0},
+        {g_ttz, 0, 0, 0}
     };
 
-    float4x4 c2 = {
-        {2 * y * Pow2(rho) * (rhoMinus2) * horizonRadius / ((rhoPlus2)), 0, 0, 0},
-        {0, 2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * x * horizonRadius / (rhoSquared * rhoPlus2), 0},
-        {0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2), - 2 * z * horizonRadius / (rhoSquared * rhoPlus2)},
-        {0, 0,  -2 * z * horizonRadius / (rhoSquared * rhoPlus2), 2 * y * horizonRadius / (rhoSquared * rhoPlus2)}
+    float4x4 c1 =
+    {
+        {g_xtt, 0, 0, 0},
+        {0, g_xxx, g_xxy, g_xxz},
+        {0, g_xxy, g_xyy, 0},
+        {0, g_xxz, 0, g_xzz}
     };
 
-    float4x4 c3 = {
-        {2 * z * Pow2(rho) * (rhoMinus2) * horizonRadius / (Pow7(rhoPlus2)), 0, 0, 0},
-        {0, 2 * z * horizonRadius / (rhoSquared * rhoPlus2), 0, -2 * x * horizonRadius / (rhoSquared * rhoPlus2)},
-        {0, 0, 2 * z * horizonRadius / (rhoSquared * rhoPlus2), -2 * y * horizonRadius / (rhoSquared * rhoPlus2)},
-        {0,  -2 * x * horizonRadius / (rhoSquared * rhoPlus2),  -2 * y * horizonRadius / (rhoSquared * rhoPlus2), -2 * z * horizonRadius / (rhoSquared * rhoPlus2)}
+    float4x4 c2 = 
+    {
+        {g_ytt, 0, 0, 0},
+        {0, g_yxx, g_yxy, 0},
+        {0, g_yxy, g_yyy, g_yyz},
+        {0, 0, g_yyz, g_yzz}
     };
+
+    float4x4 c3 = 
+    {
+        {g_ztt, 0, 0, 0},
+        {0, g_zxx, 0, g_zxz},
+        {0, 0, g_zyy, g_zyz},
+        {0, g_zxz, g_zyz, g_zzz}
+    };
+
 
     [unroll]
     for(int a = 0; a < 4; a++){
@@ -110,11 +144,11 @@ float Pow3(float input)
         float rho_s = horizonRadius;
 
         float g_tt = -(1 - (sqrt( (u[1] * u[1]) + (u[2] * u[2]) +(u[3] * u[3]) ) / (rho_s)));
-        float g_xx = (1/(-g_tt));
+        float g_xx = 1/(1 - (1 - (sqrt( (u[1] * u[1]) + (u[2] * u[2]) +(u[3] * u[3]) ) / (rho_s))));
         float g_yy = sqrt((u[1] * u[1]) + (u[2] * u[2]) +(u[3] * u[3]));
         float g_zz = (u[2] * u[2] * u[3] * u[3]) / (u[1] * u[1]);
 
-        float u_t = (sqrt(abs( (g_xx * (u[5] * u[5])) + (g_yy * (u[6] * u[6])) + (g_zz * (u[7] * u[7])) / g_tt)));
+        float u_t = sqrt(-((g_xx * Pow2(u[5])) + (g_yy * Pow2(u[6])) + (g_zz * Pow2(u[7]))) / g_tt);
         u[4] = u_t;
     }
 
@@ -130,6 +164,13 @@ float Pow3(float input)
     float error;
 
     float u_trial[8];
+
+    // float xu[8] =
+    // {
+    //     x[0], x[1], x[2], x[3], u[0], u[1], u[2], u[3],
+    // };
+
+    // u[0] = NullCondition(xu);
 
     float dt_min = 1e-10;
 
@@ -208,16 +249,15 @@ float Pow3(float input)
             for(int i = 0; i < 4; i++){
                 x[i] = u_trial[i];
             }
+            
+            //NullCondition(u_trial);
             for(int i = 4; i < 8; i++){
-                if(i == 4)
-                {
-                    NullCondition(u_trial);
-                }
-                if(i > 4)
-                {
+                
                 u[i-4] = u_trial[i];
-                }
+            
             }
+            
+            
             if(4*error < tol){
                 dt = dt * 2.0;
             }
@@ -226,6 +266,7 @@ float Pow3(float input)
         {
 
             dt *= 0.5;
+            //dt = max(dt, 1e-3);
         } 
         return isGood;  
     
@@ -286,30 +327,39 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         t += dt;
         Position[id.xy]  = x;
         Direction[id.xy] = u;
+
     }
 
     float dist = sqrt((x[1]*x[1]) + (x[2]*x[2]) + (x[3]*x[3]));
 
-    bool hitDisk = diskHit(x, dist);
+    // bool hitDisk = diskHit(x, dist);
 
-    float noise = DiskNoise(x);
+    // float noise = DiskNoise(x);
 
-    if(hitDisk)
-    {
-        Color[id.xy] = Blend(Color[id.xy], noise * float4(0.08, 0.04, 0.01, 1.0));
+    // if(hitDisk)
+    // {
+    //     Color[id.xy] = Blend(Color[id.xy], noise * float4(0.08, 0.04, 0.01, 1.0));
        
-    }
+    // }
+    // if((u.x > 1.0))
+    // {
+    //     // Blend black with previous color
+    //     Color[id.xy] = Blend(Color[id.xy], float4(0.0, 0.0, 1.0, 0.0));
 
-    if(abs(dist < horizonRadius))
+    //     // Set complete flag
+    //     isComplete[id.xy] = 1;
+    // }
+
+    if((dist < horizonRadius))
     {
         // Blend black with previous color
-        Color[id.xy] = Blend(Color[id.xy], float4(0.0, 0.0, 0.0, 0.0));
+        Color[id.xy] = Blend(Color[id.xy], float4(1.0, 0.0, 0.0, 0.0));
 
         // Set complete flag
         isComplete[id.xy] = 1;
     }
 
-    if(abs(dist) > 1000.0)
+    if(dist > 1000.0)
     {
         float4 skyboxColor = float4(SampleBackground(x, camPos), 1.0);
         // Blend with previous color value

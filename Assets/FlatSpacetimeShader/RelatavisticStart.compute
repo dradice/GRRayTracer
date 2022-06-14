@@ -153,7 +153,7 @@ float Dot(float4x4 g, float4 v1, float4 v2)
 
         float4x4 e = CameraTetrad(x);
 
-        float h = Metric(x)[2][2];
+      
 
         k[0] = e[0][0] + omega[0] * e[0][1] + omega[1] * e[0][2] + e[0][3] * omega[2];
         k[1] = e[1][0] + omega[0] * e[1][1] + omega[1] * e[1][2] + e[1][3] * omega[2];
@@ -186,8 +186,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     // Pass direction to result
     Position[id.xy] = float4(0.0, _CameraPositionCartesian);
-    Direction[id.xy] = float4(0.0, -direction);
-    //Direction[id.xy] = tetradDirection(float4(1.0, _CameraPositionCartesian), -direction);
+    //Direction[id.xy] = float4(0.0, -direction);
+    Direction[id.xy] = tetradDirection(float4(0.0, _CameraPositionCartesian), -direction);
     Color[id.xy] = float4(0.0, 0.0, 0.0, 0.0);
     isComplete[id.xy] = 0;
     TimeStep[id.xy] = timeStep;
