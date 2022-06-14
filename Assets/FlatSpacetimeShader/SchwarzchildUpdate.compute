@@ -105,6 +105,19 @@ float Pow3(float input)
     }
 }
 
+    void NullCondition(inout float u[8])
+    {
+        float rho_s = horizonRadius;
+
+        float g_tt = -(1 - (sqrt( (u[1] * u[1]) + (u[2] * u[2]) +(u[3] * u[3]) ) / (rho_s)));
+        float g_xx = (1/(-g_tt));
+        float g_yy = sqrt((u[1] * u[1]) + (u[2] * u[2]) +(u[3] * u[3]));
+        float g_zz = (u[2] * u[2] * u[3] * u[3]) / (u[1] * u[1]);
+
+        float u_t = (sqrt(abs( (g_xx * (u[5] * u[5])) + (g_yy * (u[6] * u[6])) + (g_zz * (u[7] * u[7])) / g_tt)));
+        u[4] = u_t;
+    }
+
     bool ShootRay(inout float dt, float tol, inout float4 x, inout float4 u)
 { //this function shoots rays in the direction they originate from until they reach a certain distance (int count is incremented to maximum amount)
 
@@ -180,6 +193,7 @@ float Pow3(float input)
         [unroll]
         for(int i = 4; i < 8; i++){
             u_trial[i] = u[i-4] + dt*k[i];
+
         }
 
         error = 0.0;
@@ -195,7 +209,14 @@ float Pow3(float input)
                 x[i] = u_trial[i];
             }
             for(int i = 4; i < 8; i++){
+                if(i == 4)
+                {
+                    NullCondition(u_trial);
+                }
+                if(i > 4)
+                {
                 u[i-4] = u_trial[i];
+                }
             }
             if(4*error < tol){
                 dt = dt * 2.0;
@@ -279,7 +300,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
        
     }
 
-    if(abs(dist) < 0.5)
+    if(abs(dist < horizonRadius))
     {
         // Blend black with previous color
         Color[id.xy] = Blend(Color[id.xy], float4(0.0, 0.0, 0.0, 0.0));
