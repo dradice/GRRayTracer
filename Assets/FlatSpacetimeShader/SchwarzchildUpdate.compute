@@ -58,6 +58,11 @@ float Pow3(float input)
     return input * input * input;
 }
 
+float Pow4(float input)
+{
+    return input * input * input * input;
+}
+
     void SchwarzchildChristoffel(float x, float y, float z, inout float4x4 Christoffel[4]){
 
     float rho = sqrt((x * x) + (y * y) + (z * z));
@@ -142,11 +147,17 @@ float Pow3(float input)
     void NullCondition(inout float u[8])
     {
         float rho_s = horizonRadius;
+        float rho = sqrt((u[1] * u[1]) + (u[2] * u[2]) + (u[3] * u[3]));
+        
+        float g_tt = -(1 - rho_s / rho) / (1 + rho_s / rho) * (1 - rho_s / rho) / (1 + rho_s / rho);
+        float g_xx = Pow4((1 + rho_s / rho));
+        float g_yy = g_xx;
+        float g_zz = g_xx; 
 
-        float g_tt = -(1 - (sqrt( (u[1] * u[1]) + (u[2] * u[2]) +(u[3] * u[3]) ) / (rho_s)));
-        float g_xx = 1/(1 - (1 - (sqrt( (u[1] * u[1]) + (u[2] * u[2]) +(u[3] * u[3]) ) / (rho_s))));
-        float g_yy = sqrt((u[1] * u[1]) + (u[2] * u[2]) +(u[3] * u[3]));
-        float g_zz = (u[2] * u[2] * u[3] * u[3]) / (u[1] * u[1]);
+        // float g_tt = (1 - (rho_s / sqrt( (u[1] * u[1]) + (u[2] * u[2]) +(u[3] * u[3]) )));
+        // float g_xx = 1/(1 - ((rho_s / sqrt( (u[1] * u[1]) + (u[2] * u[2]) +(u[3] * u[3]) ))));
+        // float g_yy = sqrt((u[1] * u[1]) + (u[2] * u[2]) +(u[3] * u[3]));
+        // float g_zz = (u[2] * u[2] * u[3] * u[3]) / (u[1] * u[1]);
 
         float u_t = sqrt(-((g_xx * Pow2(u[5])) + (g_yy * Pow2(u[6])) + (g_zz * Pow2(u[7]))) / g_tt);
         u[4] = u_t;
@@ -250,7 +261,7 @@ float Pow3(float input)
                 x[i] = u_trial[i];
             }
             
-            //NullCondition(u_trial);
+            NullCondition(u_trial);
             for(int i = 4; i < 8; i++){
                 
                 u[i-4] = u_trial[i];
@@ -332,28 +343,20 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     float dist = sqrt((x[1]*x[1]) + (x[2]*x[2]) + (x[3]*x[3]));
 
-    // bool hitDisk = diskHit(x, dist);
+    bool hitDisk = diskHit(x, dist);
 
-    // float noise = DiskNoise(x);
+    float noise = DiskNoise(x);
 
-    // if(hitDisk)
-    // {
-    //     Color[id.xy] = Blend(Color[id.xy], noise * float4(0.08, 0.04, 0.01, 1.0));
+    if(hitDisk)
+    {
+        Color[id.xy] = Blend(Color[id.xy], noise * float4(0.08, 0.04, 0.01, 1.0));
        
-    // }
-    // if((u.x > 1.0))
-    // {
-    //     // Blend black with previous color
-    //     Color[id.xy] = Blend(Color[id.xy], float4(0.0, 0.0, 1.0, 0.0));
-
-    //     // Set complete flag
-    //     isComplete[id.xy] = 1;
-    // }
+    }
 
     if((dist < horizonRadius))
     {
         // Blend black with previous color
-        Color[id.xy] = Blend(Color[id.xy], float4(1.0, 0.0, 0.0, 0.0));
+        Color[id.xy] = Blend(Color[id.xy], float4(0.0, 0.0, 0.0, 0.0));
 
         // Set complete flag
         isComplete[id.xy] = 1;
