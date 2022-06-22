@@ -46,15 +46,18 @@ public class RayTraceCameraBHVR : MonoBehaviour
         checkTimer = 0f,
         numThreads = 8f,
         coordinateTime = 0f;
-    private int
+    public int
         currentPass = 0,
         currentFrame = 0;
     private Vector2Int
         lastCheck = new Vector2Int(0, 0);
-    private bool
-        startRender = true,
-        renderComplete = false,
-        hardCheck = false;
+    
+    private bool startRender = true;
+    private bool hardCheck = false;
+
+    //public variables
+    public bool
+        renderComplete = false;
 
     private void Awake()
     {
@@ -251,6 +254,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
 
         // Set complete render flag
         renderComplete = true;
+
 
         // Debug message
         int elapsedTime = (int)(Time.realtimeSinceStartup - startTime);
