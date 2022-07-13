@@ -1,5 +1,6 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
+#pragma shader_feature STEREO_CUBEMAP_RENDER
 
 // Output parameters
 RWTexture2D<float4> Position;
@@ -187,7 +188,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     // Pass direction to result
     Position[id.xy] = float4(0.0, _CameraPositionCartesian);
     //Direction[id.xy] = float4(0.0, -direction);
-    Direction[id.xy] = tetradDirection(float4(0.0, _CameraPositionCartesian), -direction);
+    Direction[id.xy] = tetradDirection(float4(0.0, _CameraPositionCartesian), direction);
     Color[id.xy] = float4(0.0, 0.0, 0.0, 0.0);
     isComplete[id.xy] = 0;
     TimeStep[id.xy] = timeStep;

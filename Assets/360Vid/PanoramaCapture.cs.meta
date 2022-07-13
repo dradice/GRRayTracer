@@ -1,0 +1,25 @@
+fileFormatVersion: 2
+guid: b6e21416a8125af4a9cb5328cd323f6a
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - front: {instanceID: 0}
+  - back: {instanceID: 0}
+  - left: {instanceID: 0}
+  - right: {instanceID: 0}
+  - up: {instanceID: 0}
+  - down: {instanceID: 0}
+  - faceF: {fileID: 8600000, guid: 22408e97a140df64abff3e9111a26432, type: 2}
+  - faceB: {fileID: 8400000, guid: efe364e62e33ea74fa45037ef79d2e0f, type: 2}
+  - faceL: {fileID: 8400000, guid: d7c33710db60fc6479cc95dd112514f8, type: 2}
+  - faceR: {fileID: 8400000, guid: 767adc0005ea8ac4cac1341b574defd7, type: 2}
+  - faceU: {fileID: 8400000, guid: 3a02720f84a0d68449555af3db5b7815, type: 2}
+  - faceD: {fileID: 8400000, guid: cb50bdbbbe740a64a8e3c75950e1c97b, type: 2}
+  - cubeMapLeft: {fileID: 8400000, guid: 65f3174b1d069c74d87ffd57e5e68955, type: 2}
+  - equirectRT: {fileID: 8400000, guid: df088d08592f7144abea50949998d56b, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

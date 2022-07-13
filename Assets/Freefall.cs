@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Freefall : MonoBehaviour
 {
-    public float framerate = 1000.0f;
+    public float framerate = 3.0f;
     public float timeStep = 1e-4f;
     public float errorTolerance = 1e-3f;
     public float t_0 = 0.0f;
@@ -15,16 +15,13 @@ public class Freefall : MonoBehaviour
 
     public bool frameComplete;
     public int numFramesCheck = 0;
-    public int numFrames;
+    public int numFrames = 0;
 
     void Start()
     {
-        RayTraceCameraBHVR rtcBHVR = GetComponent<RayTraceCameraBHVR>();
-        rho_s = rtcBHVR.horizonRadius;
-        frameComplete = rtcBHVR.renderComplete;
 
-        position = new float[4] { 0.0f, (float)Camera.main.transform.position[0], (float)Camera.main.transform.position[1], (float)Camera.main.transform.position[2] };
-        momentum = new float[4] { 0.0f, 0.0f, 0.0f, 0.0f };
+        position = new float[4] { 0.0f, (float)transform.position[0], (float)transform.position[1], (float)transform.position[2] };
+        momentum = new float[4] { 1.0f, 0.0f, 0.0f, 0.0f };
     }
 
     float Pow7(float input)
@@ -52,12 +49,12 @@ public class Freefall : MonoBehaviour
       
         float rho = Mathf.Sqrt((u[1] * u[1]) + (u[2] * u[2]) + (u[3] * u[3]));
 
-        float g_tt = -(1 - rho_s / rho) / (1 + rho_s / rho) * (1 - rho_s / rho) / (1 + rho_s / rho);
+        float g_tt = -(1 - rho_s / rho);
         float g_xx = Pow4((1 + rho_s / rho));
         float g_yy = g_xx;
         float g_zz = g_xx;
 
-        float u_t = -1.0f - Mathf.Sqrt(-((g_xx * Pow2(u[5])) + (g_yy * Pow2(u[6])) + (g_zz * Pow2(u[7]))) / g_tt);
+        float u_t = Mathf.Sqrt((-1.0f - ((g_xx * Pow2(u[5])) + (g_yy * Pow2(u[6])) + (g_zz * Pow2(u[7])))) / g_tt);
         u[4] = u_t;
     }
 
@@ -129,6 +126,9 @@ public class Freefall : MonoBehaviour
          {0.0f, 0.0f, g_zyy, g_zyz},
          {0.0f, g_zxz, g_zyz, g_zzz}
         };
+
+
+
 
         for (int i = 0; i < 4; i++)
         {
@@ -258,10 +258,14 @@ bool MoveCam(ref float dt, float tol, ref float[] x, ref float[] u)
     // Update is called once per frame
     void Update()
     {
-            RayTraceCameraBHVR rtcBHVR = GetComponent<RayTraceCameraBHVR>();
-            numFrames = rtcBHVR.currentFrame;
+        GameObject multiCam = GameObject.Find("360Cam");
+        PanoramaCapture unify = multiCam.GetComponent<PanoramaCapture>();
+        int numFrames = unify.fCount;
 
-        if (numFrames > numFramesCheck)
+        /*if (numFrames > numFramesCheck)
+        {*/
+        ///numFramesCheck = numFrames;
+        if (t_0 < framerate)
         {
             float[] x = position;
             float[] u = momentum;
@@ -277,21 +281,30 @@ bool MoveCam(ref float dt, float tol, ref float[] x, ref float[] u)
 
             if (isGood)
             {
+
                 t_0 += timeStep;
                 position = x;
                 momentum = u;
 
             }
+        }
 
-            if (t_0 >= 1.0f / framerate)
+            if (t_0 >= framerate)
             {
-                transform.position = new Vector3(position[1], position[2], position[3]);
-                numFramesCheck += 1;
-                t_0 = 0.0f;
+                if (numFrames > numFramesCheck)
+                {
+                    numFramesCheck = numFrames;
+                    Debug.Log("updating cam pos.");
+                    transform.position = new Vector3(position[1], position[2], position[3]);
+                    numFramesCheck += 1;
+                    t_0 = 0.0f;
+                }
+            
+        
             }
 
 
-        }
+       
         
     }
 }

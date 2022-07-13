@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class RayTraceCameraBHVR : MonoBehaviour
 {
+#pragma shader_feature STEREO_CUBEMAP_RENDER
     [Header("Shaders")]
     public ComputeShader cameraVectorShader;
     public ComputeShader rayUpdateShader;
@@ -18,13 +19,16 @@ public class RayTraceCameraBHVR : MonoBehaviour
     public float errorTolerance = 0.001f;
 
     [Header("Renderer Settings")]
-    public int numFrames = 60;
+    public int numFrames = 1000000;
     public float framesPerSecond = 30f;
     public float updateInterval = 15f;
     public int overSample = 4;
     public int maxSoftPasses = 5000;
-    public int maxPasses = 10000;
+    public int maxPasses = 100000;
     public bool exitOnComplete = false;
+    public int completeFace = 0;
+    
+    
 
     [Header("Physical Parameters")]
     public float diskRadius = 3.0f;
@@ -46,9 +50,10 @@ public class RayTraceCameraBHVR : MonoBehaviour
         checkTimer = 0f,
         numThreads = 8f,
         coordinateTime = 0f;
-    public int
-        currentPass = 0,
-        currentFrame = 0;
+    
+    public int currentPass = 0;
+    public int currentFrame = 0;
+    public int allFacesComplete = 0;
     private Vector2Int
         lastCheck = new Vector2Int(0, 0);
     
@@ -126,9 +131,15 @@ public class RayTraceCameraBHVR : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
+        GameObject multiCam = GameObject.Find("360Cam");
+        PanoramaCapture unify = multiCam.GetComponent<PanoramaCapture>();
+        int frameTrack = unify.fCount;
+
         // Step through ray trace if not complete
-        if (!renderComplete)
+        if (!renderComplete && allFacesComplete <= frameTrack)
         {
+            allFacesComplete = frameTrack;
             if (startRender)
             {
 
@@ -152,6 +163,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
                 UpdateRay();
                 currentPass++;
 
+
                 // Check if hard check pass is surpassed
                 if (!hardCheck && currentPass >= maxSoftPasses)
                 {
@@ -164,7 +176,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
                 if (currentPass >= maxPasses)
                 {
                     Debug.Log("Maximum passes exceeded, timing out.");
-                    OnComplete();
+                    CheckCompleteness(true);
                 }
             }
 
@@ -172,7 +184,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
             if (Time.time - checkTimer > updateInterval)
             {
                 checkTimer = Time.time;
-                CheckCompleteness();
+                CheckCompleteness(false);
             }
         }
     }
@@ -222,28 +234,47 @@ public class RayTraceCameraBHVR : MonoBehaviour
         return outTex;
     }
 
-    private void CheckCompleteness()
+    private void CheckCompleteness(bool maxPasses)
     {
+
+        GameObject multiCam = GameObject.Find("360Cam");
+        PanoramaCapture unify = multiCam.GetComponent<PanoramaCapture>();
+        int frameTrack = unify.fCount;
 
         // Read render texture to texture2D
         Texture2D completeTex = RenderToTexture(_isComplete, TextureFormat.RFloat);
 
+
         // Loop over pixels searching for incomplete
-        for (int i = lastCheck.x; i < _isComplete.width; i++)
+        if (!maxPasses)
         {
-            for (int j = lastCheck.y; j < _isComplete.width; j++)
+            for (int i = lastCheck.x; i < _isComplete.width; i++)
             {
-                if (completeTex.GetPixel(i, j).r == 0)
+                for (int j = lastCheck.y; j < _isComplete.width; j++)
                 {
-                    //Debug.Log("Incomplete on pixel: (" + i.ToString() + ", " + j.ToString() + ")");
-                    Destroy(completeTex);
-                    lastCheck = new Vector2Int(i, j);
-                    return;
+                    if (completeTex.GetPixel(i, j).r == 0)
+                    {
+                        //Debug.Log("Incomplete on pixel: (" + i.ToString() + ", " + j.ToString() + ")");
+                        Destroy(completeTex);
+                        lastCheck = new Vector2Int(i, j);
+                        return;
+                    }
                 }
             }
         }
 
-        // Run method if not broken
+        else if (maxPasses)
+        {
+            if (allFacesComplete <= frameTrack)
+            {
+                // Run method if not broken
+                allFacesComplete++;
+                Destroy(completeTex);
+                Debug.Log("All pixels rendered successfully.");
+                OnComplete();
+            }
+        }
+        allFacesComplete++;
         Destroy(completeTex);
         Debug.Log("All pixels rendered successfully.");
         OnComplete();
@@ -254,6 +285,9 @@ public class RayTraceCameraBHVR : MonoBehaviour
 
         // Set complete render flag
         renderComplete = true;
+        
+
+        SaveToFile(_color); 
 
 
         // Debug message
@@ -261,6 +295,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
         Debug.Log("Render complete!\nTime Elapsed: " + elapsedTime.ToString() + " s");
 
         // Update coordinate time
+        completeFace++;
         currentFrame++;
         if (currentFrame >= numFrames)
         {
@@ -281,10 +316,11 @@ public class RayTraceCameraBHVR : MonoBehaviour
             }
 
         }
-        else
+        else 
         {
             // Advance time and reset settings
             coordinateTime += (1f / framesPerSecond);
+            
             ResetSettings();
         }
     }
@@ -294,6 +330,57 @@ public class RayTraceCameraBHVR : MonoBehaviour
         startRender = true;
         renderComplete = false;
         hardCheck = false;
+    }
+
+    private void SaveToFile(RenderTexture saveTexture)
+    {
+
+        // Create texture2D from render texture
+        Texture2D colorTex = RenderToTexture(saveTexture, TextureFormat.RGBAFloat);
+
+        // Encode to image format
+        byte[] bytes;
+        
+         
+        bytes = colorTex.EncodeToPNG();
+            
+       
+        Destroy(colorTex);
+
+        // Save to file
+        try
+        {
+            string filenamePrefix = "";
+            string subfolder = "";
+
+            // Set up filename and save
+            string filename = string.IsNullOrEmpty(filenamePrefix) ? "" : filenamePrefix;
+            filename = filename + "_" + currentFrame.ToString();
+            
+            filename += ".png";
+             
+            
+
+            // Set up path to directory
+            string fullPath = Application.dataPath + "/Output/";
+            fullPath = string.IsNullOrEmpty(subfolder) ? fullPath : fullPath + subfolder + "/";
+
+            // Ensure existence of directory
+            if (!Directory.Exists(fullPath))
+            {
+                Directory.CreateDirectory(fullPath);
+            }
+
+            // Save file
+            File.WriteAllBytes(fullPath + filename, bytes);
+            Debug.Log("File saved.");
+
+        }
+        catch
+        {
+
+            Debug.LogWarning("ERROR: Failure to save file.");
+        }
     }
 }
 

@@ -1,5 +1,6 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
+#pragma shader_feature STEREO_CUBEMAP_RENDER
 
 // Constants
 static const float PI = 3.14159265f;
@@ -149,7 +150,7 @@ float Pow4(float input)
         float rho_s = horizonRadius;
         float rho = sqrt((u[1] * u[1]) + (u[2] * u[2]) + (u[3] * u[3]));
         
-        float g_tt = -(1 - rho_s / rho) / (1 + rho_s / rho) * (1 - rho_s / rho) / (1 + rho_s / rho);
+        float g_tt = -(1 - rho_s / rho);
         float g_xx = Pow4((1 + rho_s / rho));
         float g_yy = g_xx;
         float g_zz = g_xx; 
@@ -348,7 +349,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     if(hitDisk)
     {
-        Color[id.xy] = Blend(Color[id.xy], noise * float4(0.08, 0.04, 0.01, 1.0));
+        Color[id.xy] = Blend(Color[id.xy], noise * float4(0.2, 0.02, 0.0, 0.1));
        
     } 
 
