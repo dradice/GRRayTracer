@@ -287,7 +287,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
         renderComplete = true;
         
 
-        SaveToFile(_color); 
+        //SaveToFile(_color); 
 
 
         // Debug message

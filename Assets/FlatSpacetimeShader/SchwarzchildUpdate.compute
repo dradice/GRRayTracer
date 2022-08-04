@@ -136,6 +136,7 @@ float Pow4(float input)
 
     [unroll]
     for(int a = 0; a < 4; a++){
+        [unroll]
         for(int b = 0; b < 4; b++){
             Christoffel[0][a][b] = c0[a][b];
             Christoffel[1][a][b] = c1[a][b];
@@ -159,8 +160,91 @@ float Pow4(float input)
         u[4] = u_t;
     }
 
+    float4x4 Metric(float4 x)
+    {
+        float rho_s = horizonRadius;
+        float rho = sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3]));
+        
+        float g_tt = -(1 - rho_s / rho);
+        float g_xx = Pow4((1 + rho_s / rho));
+        float g_yy = g_xx;
+        float g_zz = g_xx; 
+
+        float4x4 g = 
+        {
+            {g_tt, 0, 0, 0},
+            {0, g_xx, 0, 0},
+            {0, 0, g_yy, 0},
+            {0, 0, 0, g_zz}
+        };
+
+        return g;
+    
+    }
+
+    float4x4 Inverse(float4x4 g)
+    {
+        
+        float4x4 i = g;
+        
+        //transpose(i);
+
+        return i;
+    }
+    
+    float Derivative(float4 x, int a, int b, int c)
+    {
+        float h = 0.01;
+
+        float4 deltaPlus_x = x;
+        deltaPlus_x[a] += h;
+        
+        float4 deltaMinus_x = x;
+        deltaMinus_x[a] -= h;
+
+        float d = (Metric(deltaPlus_x)[b][c] - Metric(deltaMinus_x)[b][c])/(2*h);
+        return d;
+    }
+
+    void ComputeChristoffel(float4 x, inout float4x4 Christoffel[4])
+    {
+        [unroll]
+        for(int a = 0; a < 4; a++)
+        {
+            for(int b = 0; b < 4; b++)
+            {
+                for(int c = 0; c < 4; c++)
+                {
+                    Christoffel[a][b][c] = 0.0;
+                }
+            }
+        }
+
+        [unroll(3)]
+        for(int a = 0; a < 4; a++)
+        {
+            [unroll]
+            for(int b = 0; b < 4; b++)
+            {
+                [unroll]
+                for(int c = 0; c < 4; c++)
+                {
+                    [unroll]
+                    for(int d = 0; d < 4; d++)
+                    {
+                        float4x4 g = Metric(x);
+                        float4x4 g_i = Inverse(g);
+
+                        Christoffel[a][b][c] += 0.5f * (g_i[a][d]) * (Derivative(x, c, d, b) + Derivative(x, b, d, c) - Derivative(x, d, b, c));
+                        
+                    }
+                }
+            }
+        }
+    }
+
     bool ShootRay(inout float dt, float tol, inout float4 x, inout float4 u)
-{ //this function shoots rays in the direction they originate from until they reach a certain distance (int count is incremented to maximum amount)
+{ 
 
     float k[8];
 
@@ -179,9 +263,9 @@ float Pow4(float input)
     bool isGood = false;
 
 
-        SchwarzchildChristoffel(x[1], x[2], x[3], Christoffel);
+        //SchwarzchildChristoffel(x[1], x[2], x[3], Christoffel);
         
-        
+        ComputeChristoffel(x, Christoffel);
   
     
         [unroll]
@@ -189,8 +273,10 @@ float Pow4(float input)
             k[a] = -u[a];
             k[a + 4] = 0.0;
        
+            [unroll]
             for(int b = 0; b < 4; b++){
-            
+                
+                [unroll]
                 for(int c = 0; c < 4; c++){
                     k[a + 4] += (Christoffel[a])[b][c] * u[b] * u[c];
                 }
@@ -212,15 +298,23 @@ float Pow4(float input)
             u_euler[i] = u[i - 4] + dt*k[i];
         }
 
-        SchwarzchildChristoffel(u_star[1], u_star[2], u_star[3], Christoffel);
+        float4 u_star_x;
+        u_star_x[0] = u_star[0];
+        u_star_x[1] = u_star[1];
+        u_star_x[2] = u_star[2];
+        u_star_x[3] = u_star[3];
+
+        ComputeChristoffel(u_star_x, Christoffel);
   
         [unroll]
         for(int a = 0; a < 4; a++){
             k[a] = -u_star[a+4];
             k[a + 4] = 0.0;
    
+            [unroll]
             for(int b = 0; b < 4; b++){
-    
+                
+                [unroll]
                 for(int c = 0; c < 4; c++){
                     k[a + 4] += (Christoffel[a])[b][c] * u_star[b + 4] * u_star[c + 4];
                 }
@@ -251,6 +345,8 @@ float Pow4(float input)
             }
             
             NullCondition(u_trial);
+
+            [unroll]
             for(int i = 4; i < 8; i++){
                 
                 u[i-4] = u_trial[i];

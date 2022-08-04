@@ -21,7 +21,7 @@ public class Freefall : MonoBehaviour
     {
 
         position = new float[4] { 0.0f, (float)transform.position[0], (float)transform.position[1], (float)transform.position[2] };
-        momentum = new float[4] { 1.0f, 0.0f, 0.0f, 0.0f };
+        momentum = new float[4] { 1.0f, 0.045f, 0.0f, 0.0f };
     }
 
     float Pow7(float input)
