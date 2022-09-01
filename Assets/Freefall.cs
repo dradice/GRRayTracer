@@ -46,7 +46,7 @@ public class Freefall : MonoBehaviour
 
     void NullCondition(ref float[] u)
     {
-      
+
         float rho = Mathf.Sqrt((u[1] * u[1]) + (u[2] * u[2]) + (u[3] * u[3]));
 
         float g_tt = -(1 - rho_s / rho);
@@ -142,118 +142,245 @@ public class Freefall : MonoBehaviour
         }
     }
 
-
-
-bool MoveCam(ref float dt, float tol, ref float[] x, ref float[] u)
-{
-    float[] k = new float[8];
-
-    float[] u_star = new float[8];
-
-    float[] u_euler = new float[8];
-
-    float error;
-
-    float[] u_trial = new float[8];
-
-    float dt_min = 1e-10f;
-
-    float[,,] Christoffel = new float[4, 4, 4];
-
-    bool isGood = false;
-
-    SchwarzchildChristoffel(x[1], x[2], x[3], ref Christoffel);
-
-
-    for (int a = 0; a < 4; a++)
+    void Metric(float[] x, ref float[,] g)
     {
-        k[a] = -u[a];
-        k[a + 4] = 0.0f;
+        float rho = Mathf.Sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3]));
 
-        for (int b = 0; b < 4; b++)
-        {
-
-            for (int c = 0; c < 4; c++)
-            {
-                k[a + 4] += (Christoffel[a, b, c]) * u[b] * u[c];
-            }
-        }
-    }
-
-    for (int i = 0; i < 4; i++)
-    {
-        u_star[i] = x[i] + (0.5f) * dt * k[i];
-        u_euler[i] = x[i] + dt * k[i];
-    }
-
-    for (int i = 4; i < 8; i++)
-    {
-        u_star[i] = u[i - 4] + (0.5f) * dt * k[i];
-        u_euler[i] = u[i - 4] + dt * k[i];
-    }
-
-    SchwarzchildChristoffel(u_star[1], u_star[2], u_star[3], ref Christoffel);
-
-    for (int a = 0; a < 4; a++)
-    {
-        k[a] = -u_star[a + 4];
-        k[a + 4] = 0.0f;
-
-        for (int b = 0; b < 4; b++)
-        {
-
-            for (int c = 0; c < 4; c++)
-            {
-                k[a + 4] += (Christoffel[a, b, c]) * u_star[b + 4] * u_star[c + 4];
-            }
-        }
-    }
-
-    for (int i = 0; i < 4; i++)
-    {
-        u_trial[i] = x[i] + dt * k[i];
-    }
-
-    for (int i = 4; i < 8; i++)
-    {
-        u_trial[i] = u[i - 4] + dt * k[i];
-    }
-
-    error = 0.0f;
-
-    for (int i = 1; i < 4; i++)
-    {
-        error += Mathf.Abs(u_trial[i] - u_euler[i]);
-    }
-
-    if (error < tol || dt <= dt_min)
-    {
-        isGood = true;
+        float g_tt = -Pow2((1 - rho_s / rho) / (1 + rho_s / rho));
+        float g_xx = Pow4((1 + rho_s / rho));
+        float g_yy = g_xx;
+        float g_zz = g_xx;
 
         for (int i = 0; i < 4; i++)
         {
-            x[i] = u_trial[i];
+            for (int j = 0; j < 4; j++)
+            {
+                if (j != i)
+                {
+                    g[i, j] = 0.0f;
+                }
+            }
         }
-
-            NullCondition(ref u_trial);
-        for (int i = 4; i < 8; i++)
-        {
-            u[i - 4] = u_trial[i];
-        }
-        if (4 * error < tol)
-        {
-            dt = dt * 2.0f;
-        }
+        g[0, 0] = g_tt;
+        g[1, 1] = g_xx;
+        g[2, 2] = g_yy;
+        g[3, 3] = g_zz;
     }
-    else if (error > tol)
+
+    void InverseMetric(float[] x, ref float[,] g)
     {
+        float rho = Mathf.Sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3]));
 
-        dt *= 0.5f;
+        float g_tt = -Pow2((1 - rho_s / rho) / (1 + rho_s / rho));
+        float g_xx = Pow4((1 + rho_s / rho));
+        float g_yy = g_xx;
+        float g_zz = g_xx;
+
+        for (int i = 0; i < 4; i++)
+        {
+            for (int j = 0; j < 4; j++)
+            {
+                if (j != i)
+                {
+                    g[i, j] = 0.0f;
+                }
+            }
+        }
+        g[0, 0] = 1 / g_tt;
+        g[1, 1] = 1 / g_xx;
+        g[2, 2] = 1 / g_yy;
+        g[3, 3] = 1 / g_zz;
     }
-    return isGood;
+
+    void Derivative(float[] x, int a, ref float[,] dg)
+    {
+        float h = 0.01f;
+        float[] deltaPlus_x = new float[4];
+
+        for (int i = 0; i < 4; i++)
+        {
+            deltaPlus_x[a] = x[a];
+        }
+
+        deltaPlus_x[a] += h;
+        float[,] gPlus = new float[4, 4];
+        Metric(x, ref gPlus);
+
+        float[] deltaMinus_x = new float[4];
+
+        for (int i = 0; i < 4; i++)
+        {
+            deltaMinus_x[a] = x[a];
+        }
+
+        deltaMinus_x[a] -= h;
+        float[,] gMinus = new float[4, 4];
+        Metric(x, ref gMinus);
+
+        for (int b = 0; b < 4; b++)
+        {
+            for (int c = 0; c < 4; c++)
+            {
+                dg[b, c] = (gPlus[b, c] - gMinus[b, c]) / (2 * h);
+            }
+        }
+
+    }
+
+    bool MoveCam(ref float dt, float tol, ref float[] x_u, ref float[] u_u)
+    {
+        float[] rhs_x_u = new float[4];
+        float[] rhs_u_u = new float[4];
+        float[] rhs_u_d = new float[4];
+
+        float[] x_u_star = new float[4];
+        float[] u_d_star = new float[4];
+        float[] u_u_star = new float[4];
+
+        float[] x_u_euler = new float[4];
+        float[] u_d_euler = new float[4];
+        float[] u_u_euler = new float[4];
+
+        float[] u_d = new float[4];
+
+        float[,] g_dd = new float[4, 4];
+
+        Metric(x_u, ref g_dd);
+
+        float[] k = new float[8];
+
+        float[] u_star = new float[8];
+
+        float[] u_euler = new float[8];
+
+        float error = 0.0f;
+
+        float dt_min = 1e-10f;
+
+        bool isGood = false;
+
+        for (int a = 0; a < 4; a++)
+        {
+            u_d[a] = 0.0f;
+
+            for (int b = 0; b < 4; b++)
+            {
+                u_d[a] += g_dd[a, b] * u_u[b];
+            }
+
+        }
+
+        for (int a = 0; a < 4; a++)
+        {
+            rhs_x_u[a] = -u_u[a];
+
+            rhs_u_d[a] = 0.0f;
+
+            float[,] dg_dd = new float[4, 4];
+            Derivative(x_u, a, ref dg_dd);
 
 
-}
+            for (int b = 0; b < 4; b++)
+            {
+
+                for (int c = 0; c < 4; c++)
+                {
+                    rhs_u_d[a] -= dt * ((0.5f) * dg_dd[b, c] * u_u[b] * u_u[c]);
+                }
+            }
+        }
+
+        for (int a = 0; a < 4; a++)
+        {
+            x_u_star[a] = x_u[a] + (0.5f) * dt * rhs_x_u[a];
+            u_d_star[a] = u_d[a] + (0.5f) * dt * rhs_u_d[a];
+        }
+
+        float[,] g_uu = new float[4, 4];
+        InverseMetric(x_u_star, ref g_uu);
+
+        for (int a = 0; a < 4; a++)
+        {
+            u_u_star[a] = 0.0f;
+
+            for (int b = 0; b < 4; b++)
+            {
+                u_u_star[a] += g_uu[a, b] * u_d_star[b];
+            }
+        }
+
+        for (int a = 0; a < 4; a++)
+        {
+            x_u_euler[a] = x_u[a] + dt * rhs_x_u[a];
+            u_d_euler[a] = u_d[a] + dt * rhs_u_d[a];
+        }
+
+        for (int a = 0; a < 4; a++)
+        {
+            rhs_x_u[a] = -u_u_star[a];
+            float[,] dg_dd = new float[4, 4];
+            Derivative(x_u_star, a, ref dg_dd);
+
+            for (int b = 0; b < 4; b++)
+            {
+
+                for (int c = 0; c < 4; c++)
+                {
+                    rhs_u_d[a] -= dt * (0.5f) * (dg_dd[b, c] * u_u_star[b] * u_u_star[c]);
+                }
+            }
+        }
+
+        for (int a = 0; a < 4; a++)
+        {
+            x_u_star[a] = x_u[a] + dt * rhs_x_u[a];
+            u_d_star[a] = u_d[a] + dt * rhs_u_d[a];
+        }
+
+        for (int i = 1; i < 4; i++)
+        {
+            error += Mathf.Abs(x_u_star[i] - x_u_euler[i]);
+        }
+
+        if (error < tol || dt <= dt_min)
+        {
+            isGood = true;
+            for (int i = 0; i < 4; i++)
+            {
+                x_u[i] = x_u_star[i];
+            }
+
+            InverseMetric(x_u, ref g_uu);
+
+            for (int a = 0; a < 4; a++)
+            {
+                u_d[a] = u_d_star[a];
+            }
+
+            for (int a = 0; a < 4; a++)
+            {
+                u_u[a] = 0.0f;
+
+                for (int b = 0; b < 4; b++)
+                {
+                    u_u[a] += g_uu[a, b] * u_d[a];
+                }
+            }
+
+            if (4 * error < tol)
+            {
+                dt = dt * 2.0f;
+            }
+        }
+
+        else if (error > tol)
+        {
+            dt *= 0.5f;
+        }
+        return isGood;
+
+    }
+
 
     // Update is called once per frame
     void Update()
@@ -301,11 +428,9 @@ bool MoveCam(ref float dt, float tol, ref float[] x, ref float[] u)
                 }
             
         
-            }
-
-
-       
-        
+            } 
     }
-}
+} 
+
+
 

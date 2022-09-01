@@ -64,7 +64,8 @@ float Pow4(float input)
     return input * input * input * input;
 }
 
-    void SchwarzchildChristoffel(float x, float y, float z, inout float4x4 Christoffel[4]){
+    void SchwarzchildChristoffel(float x, float y, float z, inout float4x4 Christoffel[4])
+    {
 
     float rho = sqrt((x * x) + (y * y) + (z * z));
     float rho_s = horizonRadius;
@@ -146,26 +147,42 @@ float Pow4(float input)
     }
 }
 
-    void NullCondition(inout float u[8])
-    {
-        float rho_s = horizonRadius;
-        float rho = sqrt((u[1] * u[1]) + (u[2] * u[2]) + (u[3] * u[3]));
+    // void NullCondition(inout float u[8])
+    // {
+    //     // float rho_s = horizonRadius;
+    //     // float rho = sqrt((u[1] * u[1]) + (u[2] * u[2]) + (u[3] * u[3]));
         
-        float g_tt = -(1 - rho_s / rho);
-        float g_xx = Pow4((1 + rho_s / rho));
-        float g_yy = g_xx;
-        float g_zz = g_xx; 
+    //     // float g_tt = -(1 - rho_s / rho);
+    //     // float g_xx = Pow4((1 + rho_s / rho));
+    //     // float g_yy = g_xx;
+    //     // float g_zz = g_xx; 
 
-        float u_t = sqrt(-((g_xx * Pow2(u[5])) + (g_yy * Pow2(u[6])) + (g_zz * Pow2(u[7]))) / g_tt);
-        u[4] = u_t;
-    }
+    //     // float u_t = sqrt(-((g_xx * Pow2(u[5])) + (g_yy * Pow2(u[6])) + (g_zz * Pow2(u[7]))) / g_tt);
+    //     // u[4] = u_t;
+
+    //     float4 x;
+        
+    //     [unroll]
+    //     for(int i = 0; i < 4; i++)
+    //     {
+    //         x[i] = u[i];
+    //     }
+
+    //     [unroll]
+    //     for(int i = 0; i < 3; i++)
+    //     {
+    //         u[4] += Metric(x) * u[i];
+    //     }
+
+
+    // }
 
     float4x4 Metric(float4 x)
     {
         float rho_s = horizonRadius;
         float rho = sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3]));
         
-        float g_tt = -(1 - rho_s / rho);
+        float g_tt = -Pow2((1 - rho_s / rho) / (1 + rho_s / rho));
         float g_xx = Pow4((1 + rho_s / rho));
         float g_yy = g_xx;
         float g_zz = g_xx; 
@@ -182,189 +199,372 @@ float Pow4(float input)
     
     }
 
-    float4x4 Inverse(float4x4 g)
+    float4x4 InverseMetric(float4 x)
     {
+        float rho_s = horizonRadius;
+        float rho = sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3]));
         
-        float4x4 i = g;
-        
-        //transpose(i);
+        float g_tt = -Pow2((1 - rho_s / rho) / (1 + rho_s / rho));
+        float g_xx = Pow4((1 + rho_s / rho));
+        float g_yy = g_xx;
+        float g_zz = g_xx; 
 
-        return i;
+        float4x4 g = 
+        {
+            {1 / g_tt, 0, 0, 0},
+            {0, 1 / g_xx, 0, 0},
+            {0, 0, 1 / g_yy, 0},
+            {0, 0, 0, 1 / g_zz}
+        };
+
+        return g;
+    
     }
     
-    float Derivative(float4 x, int a, int b, int c)
+    float4x4 Derivative(float4 x, int a)
     {
         float h = 0.01;
-
         float4 deltaPlus_x = x;
+       
         deltaPlus_x[a] += h;
+        float4x4 gPlus = Metric(deltaPlus_x);
         
         float4 deltaMinus_x = x;
         deltaMinus_x[a] -= h;
+        float4x4 gMinus = Metric(deltaMinus_x);
 
-        float d = (Metric(deltaPlus_x)[b][c] - Metric(deltaMinus_x)[b][c])/(2*h);
-        return d;
-    }
-
-    void ComputeChristoffel(float4 x, inout float4x4 Christoffel[4])
-    {
+        float4x4 dg;
         [unroll]
-        for(int a = 0; a < 4; a++)
-        {
-            for(int b = 0; b < 4; b++)
-            {
-                for(int c = 0; c < 4; c++)
-                {
-                    Christoffel[a][b][c] = 0.0;
-                }
-            }
-        }
-
-        [unroll(3)]
-        for(int a = 0; a < 4; a++)
+        for(int b = 0; b < 4; b++)
         {
             [unroll]
-            for(int b = 0; b < 4; b++)
+            for(int c = 0; c < 4; c++)
             {
-                [unroll]
-                for(int c = 0; c < 4; c++)
-                {
-                    [unroll]
-                    for(int d = 0; d < 4; d++)
-                    {
-                        float4x4 g = Metric(x);
-                        float4x4 g_i = Inverse(g);
-
-                        Christoffel[a][b][c] += 0.5f * (g_i[a][d]) * (Derivative(x, c, d, b) + Derivative(x, b, d, c) - Derivative(x, d, b, c));
-                        
-                    }
-                }
+                dg[b][c] = (gPlus[b][c] - gMinus[b][c]) / (2 * h);
             }
         }
+        
+        return dg;
     }
 
-    bool ShootRay(inout float dt, float tol, inout float4 x, inout float4 u)
-{ 
+    // void ComputeChristoffel(float4 x, inout float4x4 Christoffel[4])
+    // {
+    //     [unroll]
+    //     for(int a = 0; a < 4; a++)
+    //     {
+    //         for(int b = 0; b < 4; b++)
+    //         {
+    //             for(int c = 0; c < 4; c++)
+    //             {
+    //                 Christoffel[a][b][c] = 0.0;
+    //             }
+    //         }
+    //     }
 
-    float k[8];
+    //     [unroll(3)]
+    //     for(int a = 0; a < 4; a++)
+    //     {
+    //         [unroll]
+    //         for(int b = 0; b < 4; b++)
+    //         {
+    //             [unroll]
+    //             for(int c = 0; c < 4; c++)
+    //             {
+    //                 [unroll]
+    //                 for(int d = 0; d < 4; d++)
+    //                 {
+    //                     float4x4 g = Metric(x);
+    //                     float4x4 g_i = Inverse(g);
 
-    float u_star[8];
+    //                     Christoffel[a][b][c] += 0.5f * (g_i[a][d]) * (Derivative(x, c, d, b) + Derivative(x, b, d, c) - Derivative(x, d, b, c));
+                        
+    //                 }
+    //             }
+    //         }
+    //     }
+    // }
 
-    float u_euler[8];
+    bool ShootRay(inout float dt, float tol, inout float4 x_u, inout float4 u_u)
+    { 
+    float4 rhs_x_u;
+    float4 rhs_u_u;
+    float4 rhs_u_d;
 
-    float error;
+    float4 x_u_star;
+    float4 u_d_star;
+    float4 u_u_star;
 
-    float u_trial[8];
+    float4 x_u_euler;
+    float4 u_d_euler;
+    float4 u_u_euler;
 
-    float dt_min = 1e-10;
+    float4 u_d;
 
-    float4x4 Christoffel[4];
+    float4x4 g_dd = Metric(x_u);
 
     bool isGood = false;
 
+    float error;
 
-        //SchwarzchildChristoffel(x[1], x[2], x[3], Christoffel);
-        
-        ComputeChristoffel(x, Christoffel);
-  
-    
+    float dt_min = 1e-10;
+
+    [unroll]
+    for(int a = 0; a < 4; a++)
+    {
+        u_d[a] = 0.0;
         [unroll]
-        for(int a = 0; a < 4; a++){
-            k[a] = -u[a];
-            k[a + 4] = 0.0;
-       
+        for(int b = 0; b < 4; b++)
+        {
+            u_d[a] += g_dd[a][b] * u_u[b];
+        }
+    }
+
+    [unroll]
+    for(int a = 0; a < 4; a++)
+    {
+        rhs_x_u[a] = -u_u[a];
+        
+        rhs_u_d[a] = 0.0;
+
+        // [unroll]
+        // for(int i = 0; i < 4; i++)
+        // {
+        //     [unroll]
+        //     for(int j = 0; j < 4; j++)
+        //     {
+        //         dg_dd[i][j] = Derivative(x_u, a)[i][j];
+        //     }
+        // }
+
+        float4x4 dg_dd = Derivative(x_u, a); 
+
+        [unroll]
+        for(int b = 0; b < 4; b++)
+        {
             [unroll]
-            for(int b = 0; b < 4; b++){
-                
-                [unroll]
-                for(int c = 0; c < 4; c++){
-                    k[a + 4] += (Christoffel[a])[b][c] * u[b] * u[c];
-                }
+            for(int c = 0; c < 4; c++)
+            {
+                rhs_u_d[a] -= dt * ((0.5) * dg_dd[b][c] * u_u[b] * u_u[c]);
             }
         }
+    }
+
+    [unroll]
+    for(int a = 0; a < 4; a++)
+    {
+        x_u_star[a] = x_u[a] + (0.5)*dt*rhs_x_u[a];
+        u_d_star[a] = u_d[a] + (0.5)*dt*rhs_u_d[a];
+    }
+
+    float4x4 g_uu = InverseMetric(x_u_star);
+
+    [unroll]
+    for(int a = 0; a < 4; a++)
+    {
+        u_u_star[a] = 0.0;
+        
+        [unroll]
+        for(int b = 0; b < 4; b++)
+        {
+            u_u_star[a] += g_uu[a][b] * u_d_star[b];
+        }
+    }
+
+    [unroll]
+    for(int a = 0; a < 4; a++)
+    {
+        x_u_euler[a] = x_u[a] + dt*rhs_x_u[a];
+        u_d_euler[a] = u_d[a] + dt*rhs_u_d[a];
+    }
+
+    [unroll]
+    for(int a = 0; a < 4; a++)
+    {
+        rhs_x_u[a] = -u_u_star[a];
+        //rhs_u_d[a] = 0.0;
+        float4x4 dg_dd = Derivative(x_u_star, a); 
+        [unroll]
+        for(int b = 0; b < 4; b++)
+        {
+            [unroll]
+            for(int c = 0; c < 4; c++)
+            {
+                rhs_u_d[a] -= dt * (0.5) * (dg_dd[b][c] * u_u_star[b] * u_u_star[c]);
+            }
+        }
+    }
+
+    [unroll]
+    for(int a = 0; a < 4; a++)
+    {
+        x_u_star[a] = x_u[a] + dt*rhs_x_u[a];
+        u_d_star[a] = u_d[a] + dt*rhs_u_d[a];
+    }
+
+    error = 0.0;
+    [unroll]
+    for(int i = 1; i < 4; i++)
+    {
+        error += abs(x_u_star[i] - x_u_euler[i]);
+    }
+
+    if(error < tol || dt <= dt_min)
+    {
+        isGood = true;
+        [unroll]
+        for(int i = 0; i < 4; i++){
+            x_u[i] = x_u_star[i];
+        }
+
+        g_uu = InverseMetric(x_u);
+
+        [unroll]
+        for(int a = 0; a < 4; a++){ 
+            u_d[a] = u_d_star[a];
+        }
+
+        [unroll]
+        for(int a = 0; a < 4; a++)
+        {
+            u_u[a] = 0.0;
+
+            [unroll]
+            for(int b = 0; b < 4; b++)
+            {
+                u_u[a] += g_uu[a][b] * u_d[a];
+            }
+        }
+        
+        if(4*error < tol)
+        {
+            dt = dt * 2.0;
+        }
+    }
+
+    else if(error > tol)
+    {
+        dt *= 0.5;
+    } 
+    return isGood;  
+    // float k[8];
+
+    // float u_star[8];
+
+    // float u_euler[8];
+
+    // float error;
+
+    // float u_trial[8];
+
+    // float dt_min = 1e-10;
+
+    // float4x4 Christoffel[4];
+
+    // bool isGood = false;
+
+
+    //     //SchwarzchildChristoffel(x[1], x[2], x[3], Christoffel);
+        
+    //     ComputeChristoffel(x, Christoffel);
+  
+    
+    //     [unroll]
+    //     for(int a = 0; a < 4; a++){
+    //         k[a] = -u[a];
+    //         k[a + 4] = 0.0;
+       
+    //         [unroll]
+    //         for(int b = 0; b < 4; b++){
+                
+    //             [unroll]
+    //             for(int c = 0; c < 4; c++){
+    //                 k[a + 4] += (Christoffel[a])[b][c] * u[b] * u[c];
+    //             }
+    //         }
+    //     }
             
      
         
 
-        [unroll]
-        for(int i = 0; i < 4; i++){
-            u_star[i] = x[i] + (0.5)*dt*k[i];
-            u_euler[i] = x[i] + dt*k[i];
-        }
+    //     [unroll]
+    //     for(int i = 0; i < 4; i++){
+    //         u_star[i] = x[i] + (0.5)*dt*k[i];
+    //         u_euler[i] = x[i] + dt*k[i];
+    //     }
 
-        [unroll]
-        for(int i = 4; i < 8; i++){
-            u_star[i] = u[i - 4] + (0.5)*dt*k[i];
-            u_euler[i] = u[i - 4] + dt*k[i];
-        }
+    //     [unroll]
+    //     for(int i = 4; i < 8; i++){
+    //         u_star[i] = u[i - 4] + (0.5)*dt*k[i];
+    //         u_euler[i] = u[i - 4] + dt*k[i];
+    //     }
 
-        float4 u_star_x;
-        u_star_x[0] = u_star[0];
-        u_star_x[1] = u_star[1];
-        u_star_x[2] = u_star[2];
-        u_star_x[3] = u_star[3];
+    //     float4 u_star_x;
+    //     u_star_x[0] = u_star[0];
+    //     u_star_x[1] = u_star[1];
+    //     u_star_x[2] = u_star[2];
+    //     u_star_x[3] = u_star[3];
 
-        ComputeChristoffel(u_star_x, Christoffel);
+    //     ComputeChristoffel(u_star_x, Christoffel);
   
-        [unroll]
-        for(int a = 0; a < 4; a++){
-            k[a] = -u_star[a+4];
-            k[a + 4] = 0.0;
+        // [unroll]
+        // for(int a = 0; a < 4; a++){
+        //     k[a] = -u_star[a+4];
+        //     k[a + 4] = 0.0;
    
-            [unroll]
-            for(int b = 0; b < 4; b++){
+        //     [unroll]
+        //     for(int b = 0; b < 4; b++){
                 
-                [unroll]
-                for(int c = 0; c < 4; c++){
-                    k[a + 4] += (Christoffel[a])[b][c] * u_star[b + 4] * u_star[c + 4];
-                }
-            }
-        }
+        //         [unroll]
+        //         for(int c = 0; c < 4; c++){
+        //             k[a + 4] += (Christoffel[a])[b][c] * u_star[b + 4] * u_star[c + 4];
+        //         }
+        //     }
+        // }
         
-        [unroll]
-        for(int i = 0; i < 4; i++){
-            u_trial[i] = x[i] + dt*k[i];
-        }
-        [unroll]
-        for(int i = 4; i < 8; i++){
-            u_trial[i] = u[i-4] + dt*k[i];
+        // [unroll]
+        // for(int i = 0; i < 4; i++){
+        //     u_trial[i] = x[i] + dt*k[i];
+        // }
+        // [unroll]
+        // for(int i = 4; i < 8; i++){
+        //     u_trial[i] = u[i-4] + dt*k[i];
 
-        }
+        // }
 
-        error = 0.0;
-        [unroll]
-        for(int i = 1; i < 4; i++){
-            error += abs(u_trial[i] - u_euler[i]);
-        }
+        // error = 0.0;
+        // [unroll]
+        // for(int i = 1; i < 4; i++){
+        //     error += abs(u_trial[i] - u_euler[i]);
+        // }
 
-        if(error < tol || dt <= dt_min){
-            isGood = true;
-            [unroll]
-            for(int i = 0; i < 4; i++){
-                x[i] = u_trial[i];
-            }
+        // if(error < tol || dt <= dt_min){
+        //     isGood = true;
+        //     [unroll]
+        //     for(int i = 0; i < 4; i++){
+        //         x[i] = u_trial[i];
+        //     }
             
-            NullCondition(u_trial);
+        //     NullCondition(u_trial);
 
-            [unroll]
-            for(int i = 4; i < 8; i++){
+        //     [unroll]
+        //     for(int i = 4; i < 8; i++){
                 
-                u[i-4] = u_trial[i];
+        //         u[i-4] = u_trial[i];
             
-            }
+        //     }
             
             
-            if(4*error < tol){
-                dt = dt * 2.0;
-            }
-        }
-        else if(error > tol)
-        {
+        //     if(4*error < tol){
+        //         dt = dt * 2.0;
+        //     }
+        // }
+        // else if(error > tol)
+        // {
 
-            dt *= 0.5;
-            //dt = max(dt, 1e-3);
-        } 
-        return isGood;  
+        //     dt *= 0.5;
+        //     //dt = max(dt, 1e-3);
+        // } 
+        // return isGood;  
     
     
 }
