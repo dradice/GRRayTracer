@@ -26,6 +26,9 @@ SamplerState sampler_SkyboxTexture;
 float horizonRadius;
 float diskRadius;
 
+//Light ray data
+float4 derivatives = (0.0, 0.0, 0.0, 0.0);
+
 // Blend transparency and background colors
 float4 Blend(float4 foreColor, float4 backColor)
 {
@@ -181,8 +184,10 @@ float Pow4(float input)
     {
         float rho_s = horizonRadius;
         float rho = sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3]));
+        //rho = max(rho, 1e-6);
         
         float g_tt = -Pow2((1 - rho_s / rho) / (1 + rho_s / rho));
+        g_tt = min(g_tt, -1e-12);
         float g_xx = Pow4((1 + rho_s / rho));
         float g_yy = g_xx;
         float g_zz = g_xx; 
@@ -203,48 +208,51 @@ float Pow4(float input)
     {
         float rho_s = horizonRadius;
         float rho = sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3]));
+        //rho = max(rho, 1e-6);
         
         float g_tt = -Pow2((1 - rho_s / rho) / (1 + rho_s / rho));
+        g_tt = min(g_tt, -1e-12);
         float g_xx = Pow4((1 + rho_s / rho));
         float g_yy = g_xx;
         float g_zz = g_xx; 
 
         float4x4 g = 
         {
-            {1 / g_tt, 0, 0, 0},
-            {0, 1 / g_xx, 0, 0},
-            {0, 0, 1 / g_yy, 0},
-            {0, 0, 0, 1 / g_zz}
+            {1.0 / g_tt, 0, 0, 0},
+            {0, 1.0 / g_xx, 0, 0},
+            {0, 0, 1.0 / g_yy, 0},
+            {0, 0, 0, 1.0 / g_zz}
         };
 
         return g;
     
     }
     
-    float4x4 Derivative(float4 x, int a)
+    void Derivative(float4 x, int a, inout float4x4 dg)
     {
-        float h = 0.01;
-        float4 deltaPlus_x = x;
-       
+        float h = 0.001;
+
+        float4 deltaPlus_x = (x[0], x[1], x[2], x[3]);
         deltaPlus_x[a] += h;
         float4x4 gPlus = Metric(deltaPlus_x);
         
-        float4 deltaMinus_x = x;
+        float4 deltaMinus_x = (x[0], x[1], x[2], x[3]);
         deltaMinus_x[a] -= h;
         float4x4 gMinus = Metric(deltaMinus_x);
 
-        float4x4 dg;
+        
         [unroll]
         for(int b = 0; b < 4; b++)
         {
             [unroll]
             for(int c = 0; c < 4; c++)
             {
-                dg[b][c] = (gPlus[b][c] - gMinus[b][c]) / (2 * h);
+                dg[b][c] = (gPlus[b][c] - gMinus[b][c]) / (2.0 * h);
+            
             }
         }
         
-        return dg;
+        
     }
 
     // void ComputeChristoffel(float4 x, inout float4x4 Christoffel[4])
@@ -284,7 +292,7 @@ float Pow4(float input)
     //     }
     // }
 
-    bool ShootRay(inout float dt, float tol, inout float4 x_u, inout float4 u_u)
+    bool ShootRay(inout float dt, float tol, inout float4 x_u, inout float4 u_u, float dist)
     { 
     float4 rhs_x_u;
     float4 rhs_u_u;
@@ -302,11 +310,24 @@ float Pow4(float input)
 
     float4x4 g_dd = Metric(x_u);
 
+    float4x4 dg_dd = 
+        {
+            {0.0, 0.0, 0.0, 0.0},
+            {0.0, 0.0, 0.0, 0.0},
+            {0.0, 0.0, 0.0, 0.0},
+            {0.0, 0.0, 0.0, 0.0}
+        };
+
     bool isGood = false;
 
     float error;
 
-    float dt_min = 1e-10;
+    float epsilon = 1e-6;
+
+    //float dt_star = dt*max(epsilon, dist*(1.0 - (horizonRadius / dist)));
+    float dt_star = dt;
+
+    float dt_min = 1e-9;
 
     [unroll]
     for(int a = 0; a < 4; a++)
@@ -324,19 +345,9 @@ float Pow4(float input)
     {
         rhs_x_u[a] = -u_u[a];
         
-        rhs_u_d[a] = 0.0;
+        rhs_u_d[a] = 0.0;    
 
-        // [unroll]
-        // for(int i = 0; i < 4; i++)
-        // {
-        //     [unroll]
-        //     for(int j = 0; j < 4; j++)
-        //     {
-        //         dg_dd[i][j] = Derivative(x_u, a)[i][j];
-        //     }
-        // }
-
-        float4x4 dg_dd = Derivative(x_u, a); 
+        Derivative(x_u, a, dg_dd); 
 
         [unroll]
         for(int b = 0; b < 4; b++)
@@ -344,7 +355,7 @@ float Pow4(float input)
             [unroll]
             for(int c = 0; c < 4; c++)
             {
-                rhs_u_d[a] -= dt * ((0.5) * dg_dd[b][c] * u_u[b] * u_u[c]);
+                rhs_u_d[a] -= ((0.5) * dg_dd[b][c] * u_u[b] * u_u[c]);
             }
         }
     }
@@ -352,8 +363,8 @@ float Pow4(float input)
     [unroll]
     for(int a = 0; a < 4; a++)
     {
-        x_u_star[a] = x_u[a] + (0.5)*dt*rhs_x_u[a];
-        u_d_star[a] = u_d[a] + (0.5)*dt*rhs_u_d[a];
+        x_u_star[a] = x_u[a] + (0.5)*dt_star*rhs_x_u[a];
+        u_d_star[a] = u_d[a] + (0.5)*dt_star*rhs_u_d[a];
     }
 
     float4x4 g_uu = InverseMetric(x_u_star);
@@ -373,23 +384,28 @@ float Pow4(float input)
     [unroll]
     for(int a = 0; a < 4; a++)
     {
-        x_u_euler[a] = x_u[a] + dt*rhs_x_u[a];
-        u_d_euler[a] = u_d[a] + dt*rhs_u_d[a];
+        x_u_euler[a] = x_u[a] + dt_star*rhs_x_u[a];
+        u_d_euler[a] = u_d[a] + dt_star*rhs_u_d[a];
     }
 
     [unroll]
     for(int a = 0; a < 4; a++)
     {
         rhs_x_u[a] = -u_u_star[a];
-        //rhs_u_d[a] = 0.0;
-        float4x4 dg_dd = Derivative(x_u_star, a); 
+        rhs_u_d[a] = 0.0;
+        
+         Derivative(x_u_star, a, dg_dd); 
         [unroll]
         for(int b = 0; b < 4; b++)
         {
             [unroll]
             for(int c = 0; c < 4; c++)
             {
-                rhs_u_d[a] -= dt * (0.5) * (dg_dd[b][c] * u_u_star[b] * u_u_star[c]);
+                if(dg_dd[b][c] == 0)
+                {
+                    
+                }
+                rhs_u_d[a] -= (0.5) * (dg_dd[b][c] * u_u_star[b] * u_u_star[c]);
             }
         }
     }
@@ -397,8 +413,8 @@ float Pow4(float input)
     [unroll]
     for(int a = 0; a < 4; a++)
     {
-        x_u_star[a] = x_u[a] + dt*rhs_x_u[a];
-        u_d_star[a] = u_d[a] + dt*rhs_u_d[a];
+        x_u_star[a] = x_u[a] + dt_star*rhs_x_u[a];
+        u_d_star[a] = u_d[a] + dt_star*rhs_u_d[a];
     }
 
     error = 0.0;
@@ -437,7 +453,7 @@ float Pow4(float input)
         
         if(4*error < tol)
         {
-            dt = dt * 2.0;
+            dt *= 2.0;
         }
     }
 
@@ -573,6 +589,19 @@ bool diskHit(float4 x, float dist)
 {
     float thickness = 0.01;
     if(abs(x[2]) < thickness && dist < diskRadius && dist > horizonRadius)
+    //if(abs(x[2]) < thickness && dist < diskRadius && dist > 0.0)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+bool hitShape(float4 x, float dist)
+{
+    if(abs(x[2]) < 0.1 && dist < 3.0)
     {
         return true;
     }
@@ -608,33 +637,34 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     // Break if already failed bounds check
     if (isComplete[id.xy] == 1) { return; }
     float4 x = Position[id.xy].xyzw;
-    float t = Position[id.xy].x;
     float3 camPos = x.yzw;
     float4 u = Direction[id.xy].xyzw;
     float dt = TimeStep[id.xy].x;
     float tol = ErrorTolerance[id.xy].x;
 
-    bool isGood = ShootRay(dt, tol, x, u);   
+    float dist = 1e10; 
+    // float dist = sqrt((x[1]*x[1]) + (x[2]*x[2]) + (x[3]*x[3]));
 
+    bool isGood = ShootRay(dt, tol, x, u, dist);   
     // Write back position and direction
     TimeStep[id.xy] = dt;
     if(isGood)
     {
-        t += dt;
         Position[id.xy]  = x;
         Direction[id.xy] = u;
-
+        dist = sqrt((x[1]*x[1]) + (x[2]*x[2]) + (x[3]*x[3]));
     }
 
-    float dist = sqrt((x[1]*x[1]) + (x[2]*x[2]) + (x[3]*x[3]));
-
     bool hitDisk = diskHit(x, dist);
+
+    bool shapeHit = hitShape(x, dist);
 
     float noise = DiskNoise(x);
 
     
+    //TO DO: Compute proper redshift
 
-    if((dist < horizonRadius))
+    if((dist < 1.1 * horizonRadius))
     {
         // Blend black with previous color
         Color[id.xy] = Blend(Color[id.xy], float4(0.0, 0.0, 0.0, 0.0));
@@ -643,13 +673,25 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         isComplete[id.xy] = 1;
     }
 
-    if(hitDisk)
-    {
-        Color[id.xy] = Blend(Color[id.xy], noise * float4(0.2, 0.02, 0.0, 0.1));
-       
-    } 
+    // if( ( -0.001 < ((x[3]*x[3]) / 1.0) - ((x[2]*x[2]) / 1.0) - ((x[1]*x[1]) / 1.0) < 0.01) )
+    // {
+    //     Color[id.xy] = Blend(Color[id.xy], float4(0.2, 0.0, 0.5, 0.0));
+    //     //isComplete[id.xy] = 1;
+    // }
 
-    if(dist > 1000.0)
+    if(shapeHit)
+    {
+        Color[id.xy] = Blend(Color[id.xy], float4(1.0, 0.0, 0.0, 0.0));
+        isComplete[id.xy] = 1;
+    }
+
+    // if(hitDisk)
+    // {
+    //     Color[id.xy] = Blend(Color[id.xy], float4(0.8, 0.08, 0.0, 1.0));
+    //     isComplete[id.xy] = 1;
+    // } 
+
+    if(dist > 10000.0)
     {
         float4 skyboxColor = float4(SampleBackground(x, camPos), 1.0);
         // Blend with previous color value

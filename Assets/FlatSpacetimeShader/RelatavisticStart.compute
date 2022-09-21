@@ -18,6 +18,9 @@ float timeStep;
 float errorTolerance;
 float horizonRadius;
 
+//light ray data
+float4 derivatives = (0.0f, 0.0f, 0.0f, 0.0f);
+
 float Dot(float4x4 g, float4 v1, float4 v2)
     {
         float dot = 0;

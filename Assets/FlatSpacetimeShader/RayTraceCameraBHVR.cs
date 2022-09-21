@@ -34,7 +34,6 @@ public class RayTraceCameraBHVR : MonoBehaviour
     public float diskRadius = 3.0f;
     public float horizonRadius = 0.5f;
 
-
     //Private objects
     private Camera _camera;
     private RenderTexture _position;

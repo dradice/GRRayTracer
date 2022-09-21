@@ -253,8 +253,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   framerate: 1000
-  timeStep: 0.0001
-  errorTolerance: 0.001
+  timeStep: 0.1
+  errorTolerance: 0.000000001
   t_0: 0
   rho_s: 0
   position: []
@@ -294,20 +294,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
-  skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
-  timeStep: 0.0001
+  skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
+  timeStep: 0.00001
   escapeDistance: 10000
-  errorTolerance: 0.000001
+  errorTolerance: 0.00000001
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
   overSample: 4
   maxSoftPasses: 7000
-  maxPasses: 9000
+  maxPasses: 25000
   exitOnComplete: 0
   completeFace: 0
-  diskRadius: 4
-  horizonRadius: 0.2
+  diskRadius: 1
+  horizonRadius: 0
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
@@ -537,7 +537,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 801663418}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 3.7614403, z: -11}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -578,8 +578,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   framerate: 1000
-  timeStep: 0.0001
-  errorTolerance: 0.001
+  timeStep: 0.1
+  errorTolerance: 0.000000001
   t_0: 0
   rho_s: 0
   position: []
@@ -619,20 +619,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
-  skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
-  timeStep: 0.0001
+  skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
+  timeStep: 0.00001
   escapeDistance: 10000
-  errorTolerance: 0.000001
+  errorTolerance: 0.00000001
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
   overSample: 4
   maxSoftPasses: 7000
-  maxPasses: 9000
+  maxPasses: 25000
   exitOnComplete: 0
   completeFace: 0
-  diskRadius: 4
-  horizonRadius: 0.2
+  diskRadius: 1
+  horizonRadius: 0
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
@@ -795,7 +795,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 929574263}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
@@ -816,20 +816,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
-  skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
-  timeStep: 0.0001
+  skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
+  timeStep: 0.00001
   escapeDistance: 10000
-  errorTolerance: 0.000001
+  errorTolerance: 0.00000001
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
   overSample: 4
   maxSoftPasses: 7000
-  maxPasses: 9000
+  maxPasses: 25000
   exitOnComplete: 0
   completeFace: 0
-  diskRadius: 4
-  horizonRadius: 0.2
+  diskRadius: 1
+  horizonRadius: 0
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
@@ -865,8 +865,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   framerate: 1000
-  timeStep: 0.0001
-  errorTolerance: 0.001
+  timeStep: 0.1
+  errorTolerance: 0.000000001
   t_0: 0
   rho_s: 0
   position: []
@@ -922,8 +922,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   framerate: 1000
-  timeStep: 0.0001
-  errorTolerance: 0.001
+  timeStep: 0.1
+  errorTolerance: 0.000000001
   t_0: 0
   rho_s: 0
   position: []
@@ -963,20 +963,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
-  skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
-  timeStep: 0.0001
+  skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
+  timeStep: 0.00001
   escapeDistance: 10000
-  errorTolerance: 0.000001
+  errorTolerance: 0.00000001
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
   overSample: 4
   maxSoftPasses: 7000
-  maxPasses: 9000
+  maxPasses: 25000
   exitOnComplete: 0
   completeFace: 0
-  diskRadius: 4
-  horizonRadius: 0.2
+  diskRadius: 1
+  horizonRadius: 0
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
@@ -1094,8 +1094,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   framerate: 1000
-  timeStep: 0.0001
-  errorTolerance: 0.001
+  timeStep: 0.1
+  errorTolerance: 0.000000001
   t_0: 0
   rho_s: 0
   position: []
@@ -1135,20 +1135,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
-  skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
-  timeStep: 0.0001
+  skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
+  timeStep: 0.00001
   escapeDistance: 10000
-  errorTolerance: 0.000001
+  errorTolerance: 0.00000001
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
   overSample: 4
   maxSoftPasses: 7000
-  maxPasses: 9000
+  maxPasses: 25000
   exitOnComplete: 0
   completeFace: 0
-  diskRadius: 4
-  horizonRadius: 0.2
+  diskRadius: 1
+  horizonRadius: 0
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
@@ -1211,7 +1211,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1252345758}
-  m_LocalRotation: {x: 0.7071068, y: -0, z: -0, w: 0.7071068}
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
@@ -1266,8 +1266,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   framerate: 1000
-  timeStep: 0.0001
-  errorTolerance: 0.001
+  timeStep: 0.1
+  errorTolerance: 0.000000001
   t_0: 0
   rho_s: 0
   position: []
@@ -1307,20 +1307,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
-  skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
-  timeStep: 0.0001
+  skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
+  timeStep: 0.00001
   escapeDistance: 10000
-  errorTolerance: 0.000001
+  errorTolerance: 0.00000001
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
   overSample: 4
   maxSoftPasses: 7000
-  maxPasses: 9000
+  maxPasses: 25000
   exitOnComplete: 0
   completeFace: 0
-  diskRadius: 4
-  horizonRadius: 0.2
+  diskRadius: 1
+  horizonRadius: 0
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
@@ -1456,8 +1456,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1959235823}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -25}
+  m_LocalRotation: {x: 0.70801675, y: -0, z: -0, w: 0.70619565}
+  m_LocalPosition: {x: 0, y: 1.5, z: -0.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 929574266}
@@ -1468,7 +1468,7 @@ Transform:
   - {fileID: 1252345764}
   m_Father: {fileID: 0}
   m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 90.147, y: 0, z: 0}
 --- !u!114 &1959235826
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1490,7 +1490,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1959235823}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 18649578ef176424e8b5cc0e81ba4cdf, type: 3}
   m_Name: 
@@ -1499,7 +1499,7 @@ MonoBehaviour:
   timeStep: 0.00001
   errorTolerance: 0.00001
   t_0: 0
-  rho_s: 0.2
+  rho_s: 0
   position: []
   momentum: []
   frameComplete: 0

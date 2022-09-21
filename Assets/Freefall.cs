@@ -155,16 +155,29 @@ public class Freefall : MonoBehaviour
         {
             for (int j = 0; j < 4; j++)
             {
-                if (j != i)
-                {
                     g[i, j] = 0.0f;
-                }
+                
             }
         }
         g[0, 0] = g_tt;
         g[1, 1] = g_xx;
         g[2, 2] = g_yy;
         g[3, 3] = g_zz;
+
+        for(int i = 0; i < 4; i++)
+        {
+            for(int j = 0; j < 4; j++)
+            {
+                /*if(g[i,j] == 0.0)
+                {
+                    Debug.Log("g at " + i + ", " + j + " is 0.");
+                }
+                else
+                {
+                    Debug.Log("g at " + i + ", " + j + " is " + g[i, j]);
+                }*/
+            }
+        }
     }
 
     void InverseMetric(float[] x, ref float[,] g)
@@ -180,16 +193,13 @@ public class Freefall : MonoBehaviour
         {
             for (int j = 0; j < 4; j++)
             {
-                if (j != i)
-                {
                     g[i, j] = 0.0f;
-                }
             }
         }
-        g[0, 0] = 1 / g_tt;
-        g[1, 1] = 1 / g_xx;
-        g[2, 2] = 1 / g_yy;
-        g[3, 3] = 1 / g_zz;
+        g[0, 0] = 1.0f / g_tt;
+        g[1, 1] = 1.0f / g_xx;
+        g[2, 2] = 1.0f / g_yy;
+        g[3, 3] = 1.0f / g_zz;
     }
 
     void Derivative(float[] x, int a, ref float[,] dg)
@@ -199,29 +209,30 @@ public class Freefall : MonoBehaviour
 
         for (int i = 0; i < 4; i++)
         {
-            deltaPlus_x[a] = x[a];
+            deltaPlus_x[i] = x[i];
         }
 
         deltaPlus_x[a] += h;
         float[,] gPlus = new float[4, 4];
-        Metric(x, ref gPlus);
+        Metric(deltaPlus_x, ref gPlus);
 
         float[] deltaMinus_x = new float[4];
 
         for (int i = 0; i < 4; i++)
         {
-            deltaMinus_x[a] = x[a];
+            deltaMinus_x[i] = x[i];
         }
 
         deltaMinus_x[a] -= h;
         float[,] gMinus = new float[4, 4];
-        Metric(x, ref gMinus);
+        Metric(deltaMinus_x, ref gMinus);
 
         for (int b = 0; b < 4; b++)
         {
             for (int c = 0; c < 4; c++)
             {
-                dg[b, c] = (gPlus[b, c] - gMinus[b, c]) / (2 * h);
+                dg[b, c] = (gPlus[b, c] - gMinus[b, c]) / (2.0f * h);
+                
             }
         }
 
@@ -272,20 +283,20 @@ public class Freefall : MonoBehaviour
 
         for (int a = 0; a < 4; a++)
         {
-            rhs_x_u[a] = -u_u[a];
+            rhs_x_u[a] = u_u[a];
 
             rhs_u_d[a] = 0.0f;
 
             float[,] dg_dd = new float[4, 4];
             Derivative(x_u, a, ref dg_dd);
 
-
             for (int b = 0; b < 4; b++)
             {
 
                 for (int c = 0; c < 4; c++)
                 {
-                    rhs_u_d[a] -= dt * ((0.5f) * dg_dd[b, c] * u_u[b] * u_u[c]);
+                    Debug.Log(b + ", " + c + " = " + dg_dd[b, c]);
+                    rhs_u_d[a] += dt * ((0.5f) * dg_dd[b, c] * u_u[b] * u_u[c]);
                 }
             }
         }
@@ -317,7 +328,8 @@ public class Freefall : MonoBehaviour
 
         for (int a = 0; a < 4; a++)
         {
-            rhs_x_u[a] = -u_u_star[a];
+            rhs_u_d[a] = 0.0f;
+            rhs_x_u[a] = u_u_star[a];
             float[,] dg_dd = new float[4, 4];
             Derivative(x_u_star, a, ref dg_dd);
 
@@ -326,7 +338,7 @@ public class Freefall : MonoBehaviour
 
                 for (int c = 0; c < 4; c++)
                 {
-                    rhs_u_d[a] -= dt * (0.5f) * (dg_dd[b, c] * u_u_star[b] * u_u_star[c]);
+                    rhs_u_d[a] += dt * (0.5f) * (dg_dd[b, c] * u_u_star[b] * u_u_star[c]);
                 }
             }
         }
@@ -367,7 +379,7 @@ public class Freefall : MonoBehaviour
                 }
             }
 
-            if (4 * error < tol)
+            if (4.0f * error < tol)
             {
                 dt = dt * 2.0f;
             }
@@ -377,6 +389,7 @@ public class Freefall : MonoBehaviour
         {
             dt *= 0.5f;
         }
+        
         return isGood;
 
     }
