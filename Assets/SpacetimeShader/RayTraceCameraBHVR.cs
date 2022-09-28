@@ -34,15 +34,13 @@ public class RayTraceCameraBHVR : MonoBehaviour
     public float diskRadius = 3.0f;
     public float horizonRadius = 0.5f;
 
-<<<<<<< Updated upstream:Assets/FlatSpacetimeShader/RayTraceCameraBHVR.cs
-=======
+
 
     public enum CamChoice { Panorama, Single };
     public CamChoice camChoice = CamChoice.Single;
     public bool is360 = false;
 
->>>>>>> Stashed changes:Assets/SpacetimeShader/RayTraceCameraBHVR.cs
-    //Private objects
+
     private Camera _camera;
     private RenderTexture _position;
     private RenderTexture _direction;
