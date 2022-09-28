@@ -27,13 +27,21 @@ public class RayTraceCameraBHVR : MonoBehaviour
     public int maxPasses = 100000;
     public bool exitOnComplete = false;
     public int completeFace = 0;
-    
-    
+
+
 
     [Header("Physical Parameters")]
     public float diskRadius = 3.0f;
     public float horizonRadius = 0.5f;
 
+<<<<<<< Updated upstream:Assets/FlatSpacetimeShader/RayTraceCameraBHVR.cs
+=======
+
+    public enum CamChoice { Panorama, Single };
+    public CamChoice camChoice = CamChoice.Single;
+    public bool is360 = false;
+
+>>>>>>> Stashed changes:Assets/SpacetimeShader/RayTraceCameraBHVR.cs
     //Private objects
     private Camera _camera;
     private RenderTexture _position;
@@ -49,13 +57,16 @@ public class RayTraceCameraBHVR : MonoBehaviour
         checkTimer = 0f,
         numThreads = 8f,
         coordinateTime = 0f;
-    
+
     public int currentPass = 0;
     public int currentFrame = 0;
+
     public int allFacesComplete = 0;
+
+
     private Vector2Int
         lastCheck = new Vector2Int(0, 0);
-    
+
     private bool startRender = true;
     private bool hardCheck = false;
 
@@ -67,6 +78,15 @@ public class RayTraceCameraBHVR : MonoBehaviour
     {
         // Get Camera component
         _camera = GetComponent<Camera>();
+        switch (camChoice)
+        {
+            case CamChoice.Single:
+                is360 = false;
+                break;
+            case CamChoice.Panorama:
+                is360 = true;
+                break;
+        }
     }
 
     private void InitRenderTextures()
@@ -130,15 +150,71 @@ public class RayTraceCameraBHVR : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
-        GameObject multiCam = GameObject.Find("360Cam");
-        PanoramaCapture unify = multiCam.GetComponent<PanoramaCapture>();
-        int frameTrack = unify.fCount;
+        if (is360)
+        {
+            GameObject multiCam = GameObject.Find("360Cam");
+            PanoramaCapture unify = multiCam.GetComponent<PanoramaCapture>();
+            int frameTrack = unify.fCount;
+        
 
         // Step through ray trace if not complete
-        if (!renderComplete && allFacesComplete <= frameTrack)
+
+        
+            if (!renderComplete && allFacesComplete <= frameTrack)
+            {
+                allFacesComplete = frameTrack;
+                if (startRender)
+                {
+
+                    // Read out to console
+                    Debug.Log("Beginning render.");
+
+                    // Reset variables
+                    startTime = Time.realtimeSinceStartup;
+                    lastCheck = Vector2Int.zero;
+                    startRender = false;
+                    currentPass = 0;
+
+                    // Initialize shaders
+                    SetShaderParameters();
+                    GenerateCameraVectors();
+
+                }
+                else
+                {
+                    // March rays
+                    UpdateRay();
+                    currentPass++;
+
+
+                    // Check if hard check pass is surpassed
+                    if (!hardCheck && currentPass >= maxSoftPasses)
+                    {
+                        hardCheck = true;
+                        Debug.Log("Maximum soft passes exceeded, checking for stranded rays.");
+                        rayUpdateShader.SetBool("hardCheck", true);
+                    }
+
+                    // Check if maximum passes is surpassed
+                    if (currentPass >= maxPasses)
+                    {
+                        Debug.Log("Maximum passes exceeded, timing out.");
+                        CheckCompleteness(true);
+                    }
+                }
+
+                // Check for render completeness once per second
+                if (Time.time - checkTimer > updateInterval)
+                {
+                    checkTimer = Time.time;
+                    CheckCompleteness(false);
+                }
+            }
+        }
+
+        if (!renderComplete && !is360)
         {
-            allFacesComplete = frameTrack;
+      
             if (startRender)
             {
 
@@ -236,10 +312,6 @@ public class RayTraceCameraBHVR : MonoBehaviour
     private void CheckCompleteness(bool maxPasses)
     {
 
-        GameObject multiCam = GameObject.Find("360Cam");
-        PanoramaCapture unify = multiCam.GetComponent<PanoramaCapture>();
-        int frameTrack = unify.fCount;
-
         // Read render texture to texture2D
         Texture2D completeTex = RenderToTexture(_isComplete, TextureFormat.RFloat);
 
@@ -264,122 +336,94 @@ public class RayTraceCameraBHVR : MonoBehaviour
 
         else if (maxPasses)
         {
-            if (allFacesComplete <= frameTrack)
+            if(!is360)
             {
-                // Run method if not broken
-                allFacesComplete++;
                 Destroy(completeTex);
-                Debug.Log("All pixels rendered successfully.");
                 OnComplete();
             }
+
+            if (is360)
+            {
+                GameObject multiCam = GameObject.Find("360Cam");
+                PanoramaCapture unify = multiCam.GetComponent<PanoramaCapture>();
+                int frameTrack = unify.fCount;
+
+                if (allFacesComplete <= frameTrack)
+                {
+                    // Run method if not broken
+                    allFacesComplete++;
+                    Destroy(completeTex);
+                    Debug.Log("All pixels rendered successfully.");
+                    OnComplete();
+                }
+            }
+            
+            Debug.Log("All pixels rendered successfully.");
+            OnComplete();
         }
-        allFacesComplete++;
-        Destroy(completeTex);
-        Debug.Log("All pixels rendered successfully.");
-        OnComplete();
     }
 
-    private void OnComplete()
-    {
-
-        // Set complete render flag
-        renderComplete = true;
-        
-
-        //SaveToFile(_color); 
-
-
-        // Debug message
-        int elapsedTime = (int)(Time.realtimeSinceStartup - startTime);
-        Debug.Log("Render complete!\nTime Elapsed: " + elapsedTime.ToString() + " s");
-
-        // Update coordinate time
-        completeFace++;
-        currentFrame++;
-        if (currentFrame >= numFrames)
+        private void OnComplete()
         {
 
-            // Console readout
-            Debug.Log("Render cycle complete!");
+            // Set complete render flag
+            renderComplete = true;
 
-            // Quit application
-            if (exitOnComplete)
+
+            //SaveToFile(_color); 
+
+
+            // Debug message
+            int elapsedTime = (int)(Time.realtimeSinceStartup - startTime);
+            Debug.Log("Render complete!\nTime Elapsed: " + elapsedTime.ToString() + " s");
+
+        // Update coordinate time
+        if (is360)
+        {
+            completeFace++;
+        }
+            currentFrame++;
+            if (currentFrame >= numFrames)
             {
 
-                Application.Quit();
+            if (is360)
+            {
+                
+            }
+
+                // Console readout
+                Debug.Log("Render cycle complete!");
+
+                // Quit application
+                if (exitOnComplete)
+                {
+
+                    Application.Quit();
 
 #if UNITY_EDITOR
                 UnityEditor.EditorApplication.isPlaying = false;
 #endif
 
+                }
+
             }
-
-        }
-        else 
-        {
-            // Advance time and reset settings
-            coordinateTime += (1f / framesPerSecond);
-            
-            ResetSettings();
-        }
-    }
-
-    private void ResetSettings()
-    {
-        startRender = true;
-        renderComplete = false;
-        hardCheck = false;
-    }
-
-    private void SaveToFile(RenderTexture saveTexture)
-    {
-
-        // Create texture2D from render texture
-        Texture2D colorTex = RenderToTexture(saveTexture, TextureFormat.RGBAFloat);
-
-        // Encode to image format
-        byte[] bytes;
-        
-         
-        bytes = colorTex.EncodeToPNG();
-            
-       
-        Destroy(colorTex);
-
-        // Save to file
-        try
-        {
-            string filenamePrefix = "";
-            string subfolder = "";
-
-            // Set up filename and save
-            string filename = string.IsNullOrEmpty(filenamePrefix) ? "" : filenamePrefix;
-            filename = filename + "_" + currentFrame.ToString();
-            
-            filename += ".png";
-             
-            
-
-            // Set up path to directory
-            string fullPath = Application.dataPath + "/Output/";
-            fullPath = string.IsNullOrEmpty(subfolder) ? fullPath : fullPath + subfolder + "/";
-
-            // Ensure existence of directory
-            if (!Directory.Exists(fullPath))
+            else
             {
-                Directory.CreateDirectory(fullPath);
+                // Advance time and reset settings
+                coordinateTime += (1f / framesPerSecond);
+
+                ResetSettings();
             }
-
-            // Save file
-            File.WriteAllBytes(fullPath + filename, bytes);
-            Debug.Log("File saved.");
-
         }
-        catch
+
+        private void ResetSettings()
         {
-
-            Debug.LogWarning("ERROR: Failure to save file.");
+            startRender = true;
+            renderComplete = false;
+            hardCheck = false;
         }
-    }
+    
 }
+
+
 
