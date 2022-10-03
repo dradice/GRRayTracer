@@ -3,7 +3,10 @@ guid: db1def714d992cd4b89d79234b4a23cc
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
+  - rayUpdateShader: {instanceID: 0}
+  - skyboxTexture: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

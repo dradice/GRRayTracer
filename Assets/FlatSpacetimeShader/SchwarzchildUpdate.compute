@@ -66,90 +66,6 @@ float Pow4(float input)
 {
     return input * input * input * input;
 }
-
-    void SchwarzchildChristoffel(float x, float y, float z, inout float4x4 Christoffel[4])
-    {
-
-    float rho = sqrt((x * x) + (y * y) + (z * z));
-    float rho_s = horizonRadius;
-    
-    float a = (rho - rho_s);
-    float b = Pow7(rho + rho_s);
-    float c = Pow3(rho);
-    float d = 1 + (rho_s / rho);
-    float e = (1 - Pow2(rho_s / rho));
-
-    float g_xtt = (2 * c * rho_s * a * x) / (b);
-    float g_ytt = (2 * c * rho_s * a * y) / (b);
-    float g_ztt = (2 * c * rho_s * a * z) / (b);
-
-    float g_ttx = (2 * rho_s * x) / (c * e);
-    float g_tty = (2 * rho_s * y) / (c * e);
-    float g_ttz = (2 * rho_s * z) / (c * e);
-
-    float g_xxx = -(2 * rho_s * x) / (c * d);
-    float g_yxy = g_xxx;
-    float g_zxz = g_xxx;
-    float g_xyy = -g_xxx;
-    float g_xzz = -g_xxx;
-
-    float g_yxx = (2 * rho_s * y) / (c * d);
-    float g_xxy = -g_yxx;
-    float g_yyy = -g_yxx;
-    float g_zyz = -g_yxx;
-    float g_yzz = g_yxx;
-
-    float g_zxx = (2 * rho_s * z) / (c * d);
-    float g_xxz = -g_zxx;
-    float g_zyy = g_zxx;
-    float g_yyz = -g_zxx;
-    float g_zzz = -g_zxx;
-
-    float4x4 c0 =
-    {
-        {0, g_ttx, g_tty, g_ttz},
-        {g_ttx, 0, 0, 0},
-        {g_tty, 0, 0, 0},
-        {g_ttz, 0, 0, 0}
-    };
-
-    float4x4 c1 =
-    {
-        {g_xtt, 0, 0, 0},
-        {0, g_xxx, g_xxy, g_xxz},
-        {0, g_xxy, g_xyy, 0},
-        {0, g_xxz, 0, g_xzz}
-    };
-
-    float4x4 c2 = 
-    {
-        {g_ytt, 0, 0, 0},
-        {0, g_yxx, g_yxy, 0},
-        {0, g_yxy, g_yyy, g_yyz},
-        {0, 0, g_yyz, g_yzz}
-    };
-
-    float4x4 c3 = 
-    {
-        {g_ztt, 0, 0, 0},
-        {0, g_zxx, 0, g_zxz},
-        {0, 0, g_zyy, g_zyz},
-        {0, g_zxz, g_zyz, g_zzz}
-    };
-
-
-    [unroll]
-    for(int a = 0; a < 4; a++){
-        [unroll]
-        for(int b = 0; b < 4; b++){
-            Christoffel[0][a][b] = c0[a][b];
-            Christoffel[1][a][b] = c1[a][b];
-            Christoffel[2][a][b] = c2[a][b];
-            Christoffel[3][a][b] = c3[a][b];
-        }
-    }
-}
-
     // void NullCondition(inout float u[8])
     // {
     //     // float rho_s = horizonRadius;
@@ -183,18 +99,11 @@ float Pow4(float input)
     float4x4 Metric(float4 x)
     {
         float rho_s = horizonRadius;
-<<<<<<< Updated upstream
         float rho = sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3]));
         //rho = max(rho, 1e-6);
         
         float g_tt = -Pow2((1 - rho_s / rho) / (1 + rho_s / rho));
         g_tt = min(g_tt, -1e-12);
-=======
-        float rho = sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3])) + 1e-15;
-        
-        float g_tt = -Pow2((1 - rho_s / rho) / (1 + rho_s / rho));
-        
->>>>>>> Stashed changes
         float g_xx = Pow4((1 + rho_s / rho));
         float g_yy = g_xx;
         float g_zz = g_xx; 
@@ -214,12 +123,8 @@ float Pow4(float input)
     float4x4 InverseMetric(float4 x)
     {
         float rho_s = horizonRadius;
-<<<<<<< Updated upstream
         float rho = sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3]));
         //rho = max(rho, 1e-6);
-=======
-        float rho = sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3])) + 1e-15;
->>>>>>> Stashed changes
         
         float g_tt = -Pow2((1 - rho_s / rho) / (1 + rho_s / rho));
         g_tt = min(g_tt, -1e-12);
@@ -266,44 +171,7 @@ float Pow4(float input)
         
     }
 
-    // void ComputeChristoffel(float4 x, inout float4x4 Christoffel[4])
-    // {
-    //     [unroll]
-    //     for(int a = 0; a < 4; a++)
-    //     {
-    //         for(int b = 0; b < 4; b++)
-    //         {
-    //             for(int c = 0; c < 4; c++)
-    //             {
-    //                 Christoffel[a][b][c] = 0.0;
-    //             }
-    //         }
-    //     }
-
-    //     [unroll(3)]
-    //     for(int a = 0; a < 4; a++)
-    //     {
-    //         [unroll]
-    //         for(int b = 0; b < 4; b++)
-    //         {
-    //             [unroll]
-    //             for(int c = 0; c < 4; c++)
-    //             {
-    //                 [unroll]
-    //                 for(int d = 0; d < 4; d++)
-    //                 {
-    //                     float4x4 g = Metric(x);
-    //                     float4x4 g_i = Inverse(g);
-
-    //                     Christoffel[a][b][c] += 0.5f * (g_i[a][d]) * (Derivative(x, c, d, b) + Derivative(x, b, d, c) - Derivative(x, d, b, c));
-                        
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
-
-    bool ShootRay(inout float dt, float tol, inout float4 x_u, inout float4 u_u, float dist)
+    bool ShootRay(inout float dt, float tol, inout float4 x_u, inout float4 u_u)
     { 
     float4 rhs_x_u;
     float4 rhs_u_u;
@@ -336,6 +204,7 @@ float Pow4(float input)
     float epsilon = 1e-6;
 
     //float dt_star = dt*max(epsilon, dist*(1.0 - (horizonRadius / dist)));
+    // TO-DO: get rid of dt_star
     float dt_star = dt;
 
     float dt_min = 1e-9;
@@ -412,13 +281,6 @@ float Pow4(float input)
             [unroll]
             for(int c = 0; c < 4; c++)
             {
-<<<<<<< Updated upstream
-                if(dg_dd[b][c] == 0)
-                {
-                    
-                }
-=======
->>>>>>> Stashed changes
                 rhs_u_d[a] -= (0.5) * (dg_dd[b][c] * u_u_star[b] * u_u_star[c]);
             }
         }
@@ -431,14 +293,15 @@ float Pow4(float input)
         u_d_star[a] = u_d[a] + dt_star*rhs_u_d[a];
     }
 
+    float dist = (x_u[1] * x_u[1]) + (x_u[2] * x_u[2]) + (x_u[3] * x_u[3]);
     error = 0.0;
     [unroll]
     for(int i = 1; i < 4; i++)
     {
-        error += abs(x_u_star[i] - x_u_euler[i]);
+        error += (x_u_star[i] - x_u_euler[i]) * (x_u_star[i] - x_u_euler[i]);
     }
 
-    if(error < tol || dt <= dt_min)
+    if(error < tol * tol * dist || dt <= dt_min)
     {
         isGood = true;
         [unroll]
@@ -465,7 +328,7 @@ float Pow4(float input)
             }
         }
         
-        if(4*error < tol)
+        if(16 * error < tol * tol * dist)
         {
             dt *= 2.0;
         }
@@ -475,128 +338,7 @@ float Pow4(float input)
     {
         dt *= 0.5;
     } 
-    return isGood;  
-    // float k[8];
-
-    // float u_star[8];
-
-    // float u_euler[8];
-
-    // float error;
-
-    // float u_trial[8];
-
-    // float dt_min = 1e-10;
-
-    // float4x4 Christoffel[4];
-
-    // bool isGood = false;
-
-
-    //     //SchwarzchildChristoffel(x[1], x[2], x[3], Christoffel);
-        
-    //     ComputeChristoffel(x, Christoffel);
-  
-    
-    //     [unroll]
-    //     for(int a = 0; a < 4; a++){
-    //         k[a] = -u[a];
-    //         k[a + 4] = 0.0;
-       
-    //         [unroll]
-    //         for(int b = 0; b < 4; b++){
-                
-    //             [unroll]
-    //             for(int c = 0; c < 4; c++){
-    //                 k[a + 4] += (Christoffel[a])[b][c] * u[b] * u[c];
-    //             }
-    //         }
-    //     }
-            
-     
-        
-
-    //     [unroll]
-    //     for(int i = 0; i < 4; i++){
-    //         u_star[i] = x[i] + (0.5)*dt*k[i];
-    //         u_euler[i] = x[i] + dt*k[i];
-    //     }
-
-    //     [unroll]
-    //     for(int i = 4; i < 8; i++){
-    //         u_star[i] = u[i - 4] + (0.5)*dt*k[i];
-    //         u_euler[i] = u[i - 4] + dt*k[i];
-    //     }
-
-    //     float4 u_star_x;
-    //     u_star_x[0] = u_star[0];
-    //     u_star_x[1] = u_star[1];
-    //     u_star_x[2] = u_star[2];
-    //     u_star_x[3] = u_star[3];
-
-    //     ComputeChristoffel(u_star_x, Christoffel);
-  
-        // [unroll]
-        // for(int a = 0; a < 4; a++){
-        //     k[a] = -u_star[a+4];
-        //     k[a + 4] = 0.0;
-   
-        //     [unroll]
-        //     for(int b = 0; b < 4; b++){
-                
-        //         [unroll]
-        //         for(int c = 0; c < 4; c++){
-        //             k[a + 4] += (Christoffel[a])[b][c] * u_star[b + 4] * u_star[c + 4];
-        //         }
-        //     }
-        // }
-        
-        // [unroll]
-        // for(int i = 0; i < 4; i++){
-        //     u_trial[i] = x[i] + dt*k[i];
-        // }
-        // [unroll]
-        // for(int i = 4; i < 8; i++){
-        //     u_trial[i] = u[i-4] + dt*k[i];
-
-        // }
-
-        // error = 0.0;
-        // [unroll]
-        // for(int i = 1; i < 4; i++){
-        //     error += abs(u_trial[i] - u_euler[i]);
-        // }
-
-        // if(error < tol || dt <= dt_min){
-        //     isGood = true;
-        //     [unroll]
-        //     for(int i = 0; i < 4; i++){
-        //         x[i] = u_trial[i];
-        //     }
-            
-        //     NullCondition(u_trial);
-
-        //     [unroll]
-        //     for(int i = 4; i < 8; i++){
-                
-        //         u[i-4] = u_trial[i];
-            
-        //     }
-            
-            
-        //     if(4*error < tol){
-        //         dt = dt * 2.0;
-        //     }
-        // }
-        // else if(error > tol)
-        // {
-
-        //     dt *= 0.5;
-        //     //dt = max(dt, 1e-3);
-        // } 
-        // return isGood;  
-    
-    
+    return isGood;        
 }
 
 bool diskHit(float4 x, float dist)
@@ -604,18 +346,6 @@ bool diskHit(float4 x, float dist)
     float thickness = 0.01;
     if(abs(x[2]) < thickness && dist < diskRadius && dist > horizonRadius)
     //if(abs(x[2]) < thickness && dist < diskRadius && dist > 0.0)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
-bool hitShape(float4 x, float dist)
-{
-    if(abs(x[2]) < 0.1 && dist < 3.0)
     {
         return true;
     }
@@ -648,13 +378,10 @@ float DiskNoise(float4 x)
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
+    
     // Break if already failed bounds check
     if (isComplete[id.xy] == 1) { return; }
     float4 x = Position[id.xy].xyzw;
-<<<<<<< Updated upstream
-=======
-    //float t = Position[id.xy].x;
->>>>>>> Stashed changes
     float3 camPos = x.yzw;
     float4 u = Direction[id.xy].xyzw;
     float dt = TimeStep[id.xy].x;
@@ -663,15 +390,11 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float dist = 1e10; 
     // float dist = sqrt((x[1]*x[1]) + (x[2]*x[2]) + (x[3]*x[3]));
 
-    bool isGood = ShootRay(dt, tol, x, u, dist);   
+    bool isGood = ShootRay(dt, tol, x, u);   
     // Write back position and direction
     TimeStep[id.xy] = dt;
     if(isGood)
     {
-<<<<<<< Updated upstream
-=======
-        //t += dt;
->>>>>>> Stashed changes
         Position[id.xy]  = x;
         Direction[id.xy] = u;
         dist = sqrt((x[1]*x[1]) + (x[2]*x[2]) + (x[3]*x[3]));
@@ -683,18 +406,12 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     bool hitDisk = diskHit(x, dist);
 
-    bool shapeHit = hitShape(x, dist);
-
     float noise = DiskNoise(x);
 
     
     //TO DO: Compute proper redshift
 
-<<<<<<< Updated upstream
-    if((dist < 1.1 * horizonRadius))
-=======
-    if((dist < 1.01 * horizonRadius))
->>>>>>> Stashed changes
+    if((dist <= horizonRadius))
     {
         // Blend black with previous color
         Color[id.xy] = Blend(Color[id.xy], float4(0.0, 0.0, 0.0, 0.0));
@@ -709,23 +426,11 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //     //isComplete[id.xy] = 1;
     // }
 
-    if(shapeHit)
+    if(hitDisk)
     {
-<<<<<<< Updated upstream
-        Color[id.xy] = Blend(Color[id.xy], float4(1.0, 0.0, 0.0, 0.0));
+        Color[id.xy] = Blend(Color[id.xy], float4(0.9, 0.08, 0.0, 1.0));
         isComplete[id.xy] = 1;
-    }
-
-    // if(hitDisk)
-    // {
-    //     Color[id.xy] = Blend(Color[id.xy], float4(0.8, 0.08, 0.0, 1.0));
-    //     isComplete[id.xy] = 1;
-    // } 
-=======
-        Color[id.xy] = Blend(Color[id.xy], float4(0.2, 0.02, 0.0, 0.1));
-       
     } 
->>>>>>> Stashed changes
 
     if(dist > 10000.0)
     {

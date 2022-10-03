@@ -149,7 +149,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 321991813}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 18649578ef176424e8b5cc0e81ba4cdf, type: 3}
   m_Name: 
@@ -171,8 +171,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 321991813}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -14.5}
+  m_LocalRotation: {x: 0.13796636, y: -0, z: -0, w: 0.9904369}
+  m_LocalPosition: {x: 0, y: 2, z: -18}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1511993327}
@@ -183,7 +183,7 @@ Transform:
   - {fileID: 356639374}
   m_Father: {fileID: 0}
   m_RootOrder: 1
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 15.86, y: 0, z: 0}
 --- !u!114 &321991816
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -273,7 +273,7 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
-  timeStep: 0.001
+  timeStep: 0.1
   escapeDistance: 10000
   errorTolerance: 0.001
   numFrames: 1000000
@@ -284,9 +284,9 @@ MonoBehaviour:
   maxPasses: 100000
   exitOnComplete: 0
   completeFace: 0
-  diskRadius: 3
-  horizonRadius: 0.5
-  camChoice: 1
+  diskRadius: 10
+  horizonRadius: 0.2
+  camChoice: 0
   is360: 0
   currentPass: 0
   currentFrame: 0
@@ -333,7 +333,7 @@ Camera:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingPath: -1
-  m_TargetTexture: {fileID: 0}
+  m_TargetTexture: {fileID: 8400000, guid: efe364e62e33ea74fa45037ef79d2e0f, type: 2}
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1
@@ -391,7 +391,7 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
-  timeStep: 0.001
+  timeStep: 0.1
   escapeDistance: 10000
   errorTolerance: 0.001
   numFrames: 1000000
@@ -402,9 +402,9 @@ MonoBehaviour:
   maxPasses: 100000
   exitOnComplete: 0
   completeFace: 0
-  diskRadius: 3
-  horizonRadius: 0.5
-  camChoice: 1
+  diskRadius: 10
+  horizonRadius: 0.2
+  camChoice: 0
   is360: 0
   currentPass: 0
   currentFrame: 0
@@ -451,7 +451,7 @@ Camera:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingPath: -1
-  m_TargetTexture: {fileID: 0}
+  m_TargetTexture: {fileID: 8400000, guid: cb50bdbbbe740a64a8e3c75950e1c97b, type: 2}
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1
@@ -509,7 +509,7 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
-  timeStep: 0.001
+  timeStep: 0.1
   escapeDistance: 10000
   errorTolerance: 0.001
   numFrames: 1000000
@@ -520,9 +520,9 @@ MonoBehaviour:
   maxPasses: 100000
   exitOnComplete: 0
   completeFace: 0
-  diskRadius: 3
-  horizonRadius: 0.5
-  camChoice: 1
+  diskRadius: 10
+  horizonRadius: 0.2
+  camChoice: 0
   is360: 0
   currentPass: 0
   currentFrame: 0
@@ -569,7 +569,7 @@ Camera:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingPath: -1
-  m_TargetTexture: {fileID: 0}
+  m_TargetTexture: {fileID: 8400000, guid: 3a02720f84a0d68449555af3db5b7815, type: 2}
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1
@@ -627,7 +627,7 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
-  timeStep: 0.001
+  timeStep: 0.1
   escapeDistance: 10000
   errorTolerance: 0.001
   numFrames: 1000000
@@ -638,9 +638,9 @@ MonoBehaviour:
   maxPasses: 100000
   exitOnComplete: 0
   completeFace: 0
-  diskRadius: 3
-  horizonRadius: 0.5
-  camChoice: 1
+  diskRadius: 10
+  horizonRadius: 0.2
+  camChoice: 0
   is360: 0
   currentPass: 0
   currentFrame: 0
@@ -687,7 +687,7 @@ Camera:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingPath: -1
-  m_TargetTexture: {fileID: 0}
+  m_TargetTexture: {fileID: 8400000, guid: d7c33710db60fc6479cc95dd112514f8, type: 2}
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1
@@ -840,7 +840,7 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
-  timeStep: 0.001
+  timeStep: 0.1
   escapeDistance: 10000
   errorTolerance: 0.001
   numFrames: 1000000
@@ -851,9 +851,9 @@ MonoBehaviour:
   maxPasses: 100000
   exitOnComplete: 0
   completeFace: 0
-  diskRadius: 3
-  horizonRadius: 0.5
-  camChoice: 1
+  diskRadius: 10
+  horizonRadius: 0.2
+  camChoice: 0
   is360: 0
   currentPass: 0
   currentFrame: 0
@@ -900,7 +900,7 @@ Camera:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingPath: -1
-  m_TargetTexture: {fileID: 0}
+  m_TargetTexture: {fileID: 8600000, guid: 22408e97a140df64abff3e9111a26432, type: 2}
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1
@@ -958,7 +958,7 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
-  timeStep: 0.001
+  timeStep: 0.1
   escapeDistance: 10000
   errorTolerance: 0.001
   numFrames: 1000000
@@ -969,9 +969,9 @@ MonoBehaviour:
   maxPasses: 100000
   exitOnComplete: 0
   completeFace: 0
-  diskRadius: 3
-  horizonRadius: 0.5
-  camChoice: 1
+  diskRadius: 10
+  horizonRadius: 0.2
+  camChoice: 0
   is360: 0
   currentPass: 0
   currentFrame: 0
@@ -1018,7 +1018,7 @@ Camera:
     serializedVersion: 2
     m_Bits: 4294967295
   m_RenderingPath: -1
-  m_TargetTexture: {fileID: 0}
+  m_TargetTexture: {fileID: 8400000, guid: 767adc0005ea8ac4cac1341b574defd7, type: 2}
   m_TargetDisplay: 0
   m_TargetEye: 3
   m_HDR: 1
