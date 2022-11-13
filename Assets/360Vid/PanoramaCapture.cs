@@ -37,10 +37,23 @@ public class PanoramaCapture : MonoBehaviour
         GameObject multiCam = GameObject.Find("360Cam");
         UnifyCameras unify = multiCam.GetComponent<UnifyCameras>();
         int frameTrack = unify.captureFrame;
+        bool is360 = unify.is360;
+        if(!is360)
+        {
+            back = null;
+            left = null;
+            right = null;
+            up = null;
+            down = null;
+        }
         if (frameTrack > fCount)
         {
+            Debug.Log(":)");
             fCount = frameTrack;
-            Capture();
+            if (is360)
+            {
+                Capture();
+            }
         }
 
     }

@@ -21,7 +21,8 @@ public class Freefall : MonoBehaviour
     {
 
         position = new float[4] { 0.0f, (float)transform.position[0], (float)transform.position[1], (float)transform.position[2] };
-        momentum = new float[4] { 1.0f, 0.045f, 0.0f, 0.0f };
+        momentum = new float[4] { 1.0f, 0.0f, 0.0f, 0.0f };
+        
     }
 
     float Pow7(float input)
@@ -295,7 +296,7 @@ public class Freefall : MonoBehaviour
 
                 for (int c = 0; c < 4; c++)
                 {
-                    Debug.Log(b + ", " + c + " = " + dg_dd[b, c]);
+                 
                     rhs_u_d[a] += dt * ((0.5f) * dg_dd[b, c] * u_u[b] * u_u[c]);
                 }
             }
@@ -375,7 +376,9 @@ public class Freefall : MonoBehaviour
 
                 for (int b = 0; b < 4; b++)
                 {
+                    
                     u_u[a] += g_uu[a, b] * u_d[a];
+                    Debug.Log(g_uu[a,b]);
                 }
             }
 
@@ -400,7 +403,7 @@ public class Freefall : MonoBehaviour
     {
         GameObject multiCam = GameObject.Find("360Cam");
         PanoramaCapture unify = multiCam.GetComponent<PanoramaCapture>();
-        int numFrames = unify.fCount;
+        numFrames = unify.fCount;
 
         /*if (numFrames > numFramesCheck)
         {*/
@@ -421,22 +424,23 @@ public class Freefall : MonoBehaviour
 
             if (isGood)
             {
-
+                Debug.Log("movin");
                 t_0 += timeStep;
                 position = x;
                 momentum = u;
+                Debug.Log(u[0]);
 
             }
         }
 
             if (t_0 >= framerate)
             {
+                
                 if (numFrames > numFramesCheck)
                 {
                     numFramesCheck = numFrames;
                     Debug.Log("updating cam pos.");
                     transform.position = new Vector3(position[1], position[2], position[3]);
-                    numFramesCheck += 1;
                     t_0 = 0.0f;
                 }
             

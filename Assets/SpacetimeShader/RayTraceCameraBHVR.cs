@@ -25,6 +25,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
     public int overSample = 4;
     public int maxSoftPasses = 5000;
     public int maxPasses = 100000;
+    public string subfolder = "";
     public bool exitOnComplete = false;
     public int completeFace = 0;
 
@@ -48,6 +49,8 @@ public class RayTraceCameraBHVR : MonoBehaviour
     private RenderTexture _isComplete;
     private RenderTexture _timeStep;
     private RenderTexture _errorTolerance;
+
+    public Vector4 _momentum;
 
     // Private variables
     private float
@@ -126,6 +129,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
         cameraVectorShader.SetMatrix("_CameraToWorld", _camera.cameraToWorldMatrix);
         cameraVectorShader.SetMatrix("_CameraInverseProjection", _camera.projectionMatrix.inverse);
         cameraVectorShader.SetVector("_CameraPositionCartesian", cart);
+        cameraVectorShader.SetVector("_Momentum", _momentum);
         cameraVectorShader.SetFloat("timeStep", timeStep);
         cameraVectorShader.SetFloat("errorTolerance", errorTolerance);
         cameraVectorShader.SetFloat("horizonRadius", horizonRadius);
@@ -148,16 +152,26 @@ public class RayTraceCameraBHVR : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        GameObject multiCam = GameObject.Find("360Cam");
+        Freefall freefall = multiCam.GetComponent<Freefall>();
+        float[] momentum = freefall.momentum;
+        _momentum[0] = momentum[0];
+        _momentum[1] = momentum[1];
+        _momentum[2] = momentum[2];
+        _momentum[3] = momentum[3];
+
+        Debug.Log("running360");
         if (is360)
         {
-            GameObject multiCam = GameObject.Find("360Cam");
+            Debug.Log("running2");
+            
             PanoramaCapture unify = multiCam.GetComponent<PanoramaCapture>();
             int frameTrack = unify.fCount;
-        
 
-        // Step through ray trace if not complete
 
-        
+            // Step through ray trace if not complete
+
+
             if (!renderComplete && allFacesComplete <= frameTrack)
             {
                 allFacesComplete = frameTrack;
@@ -180,6 +194,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
                 }
                 else
                 {
+                    Debug.Log("running3");
                     // March rays
                     UpdateRay();
                     currentPass++;
@@ -196,6 +211,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
                     // Check if maximum passes is surpassed
                     if (currentPass >= maxPasses)
                     {
+                        Debug.Log("checking completeness");
                         Debug.Log("Maximum passes exceeded, timing out.");
                         CheckCompleteness(true);
                     }
@@ -210,9 +226,12 @@ public class RayTraceCameraBHVR : MonoBehaviour
             }
         }
 
+     
+
         if (!renderComplete && !is360)
         {
-      
+            
+
             if (startRender)
             {
 
@@ -232,6 +251,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
             }
             else
             {
+                
                 // March rays
                 UpdateRay();
                 currentPass++;
@@ -248,6 +268,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
                 // Check if maximum passes is surpassed
                 if (currentPass >= maxPasses)
                 {
+
                     Debug.Log("Maximum passes exceeded, timing out.");
                     CheckCompleteness(true);
                 }
@@ -334,9 +355,10 @@ public class RayTraceCameraBHVR : MonoBehaviour
 
         else if (maxPasses)
         {
-            if(!is360)
+            if (!is360)
             {
                 Destroy(completeTex);
+                allFacesComplete++;
                 OnComplete();
             }
 
@@ -355,72 +377,124 @@ public class RayTraceCameraBHVR : MonoBehaviour
                     OnComplete();
                 }
             }
-            
+
             Debug.Log("All pixels rendered successfully.");
-            OnComplete();
+            // OnComplete();
         }
     }
 
-        private void OnComplete()
-        {
+    private void OnComplete()
+    {
 
-            // Set complete render flag
-            renderComplete = true;
-
-
-            //SaveToFile(_color); 
+        // Set complete render flag
+        renderComplete = true;
 
 
-            // Debug message
-            int elapsedTime = (int)(Time.realtimeSinceStartup - startTime);
-            Debug.Log("Render complete!\nTime Elapsed: " + elapsedTime.ToString() + " s");
+        //SaveToFile(_color); 
+
+
+        // Debug message
+        int elapsedTime = (int)(Time.realtimeSinceStartup - startTime);
+        Debug.Log("Render complete!\nTime Elapsed: " + elapsedTime.ToString() + " s");
 
         // Update coordinate time
         if (is360)
         {
             completeFace++;
         }
-            currentFrame++;
-            if (currentFrame >= numFrames)
-            {
+        if (!is360)
+        {
+            
+            completeFace++;
+            SaveToFile(_color);
+        }
+        currentFrame++;
+        if (currentFrame >= numFrames)
+        {
 
-            if (is360)
+            
+            if (!is360)
             {
-                
+                SaveToFile(_color);
             }
 
-                // Console readout
-                Debug.Log("Render cycle complete!");
+            // Console readout
+            Debug.Log("Render cycle complete!");
 
-                // Quit application
-                if (exitOnComplete)
-                {
+            // Quit application
+            if (exitOnComplete)
+            {
 
-                    Application.Quit();
+                Application.Quit();
 
 #if UNITY_EDITOR
                 UnityEditor.EditorApplication.isPlaying = false;
 #endif
 
-                }
-
             }
-            else
-            {
-                // Advance time and reset settings
-                coordinateTime += (1f / framesPerSecond);
 
-                ResetSettings();
-            }
         }
-
-        private void ResetSettings()
+        else
         {
-            startRender = true;
-            renderComplete = false;
-            hardCheck = false;
+            // Advance time and reset settings
+            coordinateTime += (1f / framesPerSecond);
+
+            ResetSettings();
         }
-    
+    }
+
+    private void ResetSettings()
+    {
+        startRender = true;
+        renderComplete = false;
+        hardCheck = false;
+    }
+
+    private void SaveToFile(RenderTexture saveTexture)
+    {
+
+        // Create texture2D from render texture
+        Texture2D colorTex = RenderToTexture(saveTexture, TextureFormat.RGBAFloat);
+
+        // Encode to image format
+        byte[] bytes;
+        
+        bytes = colorTex.EncodeToJPG();
+
+        
+
+        Destroy(colorTex);
+
+        // Save to file
+        try
+        {
+
+            // Set up filename and save
+            string filename = "SingleCam_" + allFacesComplete + ".jpg";
+           
+
+            // Set up path to directory
+            string fullPath = Application.dataPath + "/SingleCamFrames/";
+            fullPath = string.IsNullOrEmpty(subfolder) ? fullPath : fullPath + subfolder + "/";
+
+            // Ensure existence of directory
+            if (!Directory.Exists(fullPath))
+            {
+                Directory.CreateDirectory(fullPath);
+            }
+
+            // Save file
+            File.WriteAllBytes(fullPath + filename, bytes);
+            Debug.Log("File saved.");
+
+        }
+        catch
+        {
+
+            Debug.LogWarning("ERROR: Failure to save file.");
+        }
+    }
+
 }
 
 

@@ -639,7 +639,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     
 
-    if((dist < 1.1 * horizonRadius))
+    if((dist < 1.01 * horizonRadius))
     {
         // Blend black with previous color
         Color[id.xy] = Blend(Color[id.xy], float4(0.0, 0.0, 0.0, 0.0));

@@ -14,6 +14,7 @@ RWTexture2D<float> ErrorTolerance;
 float4x4 _CameraToWorld;
 float4x4 _CameraInverseProjection;
 float3 _CameraPositionCartesian;
+float4 _Momentum;
 float timeStep;
 float errorTolerance;
 float horizonRadius;
@@ -122,10 +123,10 @@ float Dot(float4x4 g, float4 v1, float4 v2)
         ep_z[2] = 0.0;
         ep_z[3] = -1.0;
 
-        ep_0[0] = 1.0;
-        ep_0[1] = 0.0;
-        ep_0[2] = 0.0;
-        ep_0[3] = 0.0;
+        ep_0[0] = _Momentum[0];
+        ep_0[1] = _Momentum[1];
+        ep_0[2] = _Momentum[2];
+        ep_0[3] = _Momentum[3];
 
         float4x4 g = Metric(x);
 
@@ -151,6 +152,7 @@ float Dot(float4x4 g, float4 v1, float4 v2)
         return tetrad;
     }
 
+
      float4 tetradDirection(float4 x, float3 omega)
      {
         float4 k;
@@ -159,10 +161,10 @@ float Dot(float4x4 g, float4 v1, float4 v2)
 
       
 
-        k[0] = e[0][0] + omega[0] * e[0][1] + omega[1] * e[0][2] + e[0][3] * omega[2];
-        k[1] = e[1][0] + omega[0] * e[1][1] + omega[1] * e[1][2] + e[1][3] * omega[2];
-        k[2] = e[2][0] + omega[0] * e[2][1] + omega[1] * e[2][2] + e[2][3] * omega[2];
-        k[3] = e[3][0] + omega[0] * e[3][1] + omega[1] * e[3][2] + e[3][3] * omega[2];
+        k[0] = -1*(-e[0][0] + omega[0] * e[0][1] + omega[1] * e[0][2] + e[0][3] * omega[2]);
+        k[1] = -1*(-e[1][0] + omega[0] * e[1][1] + omega[1] * e[1][2] + e[1][3] * omega[2]);
+        k[2] = -1*(-e[2][0] + omega[0] * e[2][1] + omega[1] * e[2][2] + e[2][3] * omega[2]);
+        k[3] = -1*(-e[3][0] + omega[0] * e[3][1] + omega[1] * e[3][2] + e[3][3] * omega[2]);
 
         //return float4(0.0, k[1], k[2], k[3]);
         return k;
@@ -190,8 +192,9 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
     // Pass direction to result
     Position[id.xy] = float4(0.0, _CameraPositionCartesian);
-    Direction[id.xy] = tetradDirection(float4(0.0, direction), direction);
     //Direction[id.xy] = float4(0.0, -direction);
+    Direction[id.xy] = tetradDirection(float4(0.0, _CameraPositionCartesian), -direction);
+    
     Color[id.xy] = float4(0.0, 0.0, 0.0, 0.0);
     isComplete[id.xy] = 0;
     TimeStep[id.xy] = timeStep;
