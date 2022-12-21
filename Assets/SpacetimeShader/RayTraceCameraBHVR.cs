@@ -164,7 +164,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
         if (is360)
         {
             Debug.Log("running2");
-            
+
             PanoramaCapture unify = multiCam.GetComponent<PanoramaCapture>();
             int frameTrack = unify.fCount;
 
@@ -226,11 +226,11 @@ public class RayTraceCameraBHVR : MonoBehaviour
             }
         }
 
-     
+
 
         if (!renderComplete && !is360)
         {
-            
+
 
             if (startRender)
             {
@@ -251,7 +251,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
             }
             else
             {
-                
+
                 // March rays
                 UpdateRay();
                 currentPass++;
@@ -283,218 +283,219 @@ public class RayTraceCameraBHVR : MonoBehaviour
         }
     }
 
-    private void GenerateCameraVectors()
-    {
-
-        // Make sure we have a current render target
-        InitRenderTextures();
-
-        // Set textures and dispatch the compute shader
-        cameraVectorShader.SetTexture(0, "Position", _position);
-        cameraVectorShader.SetTexture(0, "Direction", _direction);
-        cameraVectorShader.SetTexture(0, "Color", _color);
-        cameraVectorShader.SetTexture(0, "isComplete", _isComplete);
-        cameraVectorShader.SetTexture(0, "TimeStep", _timeStep);
-        cameraVectorShader.SetTexture(0, "ErrorTolerance", _errorTolerance);
-        int threadGroupsX = Mathf.CeilToInt(overSample * Screen.width / numThreads);
-        int threadGroupsY = Mathf.CeilToInt(overSample * Screen.height / numThreads);
-        cameraVectorShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
-    }
-
-    private void UpdateRay()
-    {
-
-        // Set textures and dispatch the compute shader
-        rayUpdateShader.SetTexture(0, "Position", _position);
-        rayUpdateShader.SetTexture(0, "Direction", _direction);
-        rayUpdateShader.SetTexture(0, "Color", _color);
-        rayUpdateShader.SetTexture(0, "isComplete", _isComplete);
-        rayUpdateShader.SetTexture(0, "TimeStep", _timeStep);
-        rayUpdateShader.SetTexture(0, "ErrorTolerance", _errorTolerance);
-        int threadGroupsX = Mathf.CeilToInt(overSample * Screen.width / numThreads);
-        int threadGroupsY = Mathf.CeilToInt(overSample * Screen.height / numThreads);
-        rayUpdateShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
-    }
-
-    private Texture2D RenderToTexture(RenderTexture rt, TextureFormat format)
-    {
-        // Read render texture to texture2D
-        RenderTexture.active = rt;
-        Texture2D outTex = new Texture2D(rt.width, rt.height, format, false);
-        outTex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
-        outTex.Apply(false);
-        RenderTexture.active = null;
-
-        return outTex;
-    }
-
-    private void CheckCompleteness(bool maxPasses)
-    {
-
-        // Read render texture to texture2D
-        Texture2D completeTex = RenderToTexture(_isComplete, TextureFormat.RFloat);
-
-
-        // Loop over pixels searching for incomplete
-        if (!maxPasses)
+        private void GenerateCameraVectors()
         {
-            for (int i = lastCheck.x; i < _isComplete.width; i++)
+
+            // Make sure we have a current render target
+            InitRenderTextures();
+
+            // Set textures and dispatch the compute shader
+            cameraVectorShader.SetTexture(0, "Position", _position);
+            cameraVectorShader.SetTexture(0, "Direction", _direction);
+            cameraVectorShader.SetTexture(0, "Color", _color);
+            cameraVectorShader.SetTexture(0, "isComplete", _isComplete);
+            cameraVectorShader.SetTexture(0, "TimeStep", _timeStep);
+            cameraVectorShader.SetTexture(0, "ErrorTolerance", _errorTolerance);
+            int threadGroupsX = Mathf.CeilToInt(overSample * Screen.width / numThreads);
+            int threadGroupsY = Mathf.CeilToInt(overSample * Screen.height / numThreads);
+            cameraVectorShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
+        }
+
+        private void UpdateRay()
+        {
+
+            // Set textures and dispatch the compute shader
+            rayUpdateShader.SetTexture(0, "Position", _position);
+            rayUpdateShader.SetTexture(0, "Direction", _direction);
+            rayUpdateShader.SetTexture(0, "Color", _color);
+            rayUpdateShader.SetTexture(0, "isComplete", _isComplete);
+            rayUpdateShader.SetTexture(0, "TimeStep", _timeStep);
+            rayUpdateShader.SetTexture(0, "ErrorTolerance", _errorTolerance);
+            int threadGroupsX = Mathf.CeilToInt(overSample * Screen.width / numThreads);
+            int threadGroupsY = Mathf.CeilToInt(overSample * Screen.height / numThreads);
+            rayUpdateShader.Dispatch(0, threadGroupsX, threadGroupsY, 1);
+        }
+
+        private Texture2D RenderToTexture(RenderTexture rt, TextureFormat format)
+        {
+            // Read render texture to texture2D
+            RenderTexture.active = rt;
+            Texture2D outTex = new Texture2D(rt.width, rt.height, format, false);
+            outTex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+            outTex.Apply(false);
+            RenderTexture.active = null;
+
+            return outTex;
+        }
+
+        private void CheckCompleteness(bool maxPasses)
+        {
+
+            // Read render texture to texture2D
+            Texture2D completeTex = RenderToTexture(_isComplete, TextureFormat.RFloat);
+
+
+            // Loop over pixels searching for incomplete
+            if (!maxPasses)
             {
-                for (int j = lastCheck.y; j < _isComplete.width; j++)
+                for (int i = lastCheck.x; i < _isComplete.width; i++)
                 {
-                    if (completeTex.GetPixel(i, j).r == 0)
+                    for (int j = lastCheck.y; j < _isComplete.width; j++)
                     {
-                        //Debug.Log("Incomplete on pixel: (" + i.ToString() + ", " + j.ToString() + ")");
-                        Destroy(completeTex);
-                        lastCheck = new Vector2Int(i, j);
-                        return;
+                        if (completeTex.GetPixel(i, j).r == 0)
+                        {
+                            //Debug.Log("Incomplete on pixel: (" + i.ToString() + ", " + j.ToString() + ")");
+                            Destroy(completeTex);
+                            lastCheck = new Vector2Int(i, j);
+                            return;
+                        }
                     }
                 }
             }
-        }
 
-        else if (maxPasses)
-        {
-            if (!is360)
+            else if (maxPasses)
             {
-                Destroy(completeTex);
-                allFacesComplete++;
-                OnComplete();
-            }
-
-            if (is360)
-            {
-                GameObject multiCam = GameObject.Find("360Cam");
-                PanoramaCapture unify = multiCam.GetComponent<PanoramaCapture>();
-                int frameTrack = unify.fCount;
-
-                if (allFacesComplete <= frameTrack)
+                if (!is360)
                 {
-                    // Run method if not broken
-                    allFacesComplete++;
                     Destroy(completeTex);
-                    Debug.Log("All pixels rendered successfully.");
+                    allFacesComplete++;
                     OnComplete();
                 }
+
+                if (is360)
+                {
+                    GameObject multiCam = GameObject.Find("360Cam");
+                    PanoramaCapture unify = multiCam.GetComponent<PanoramaCapture>();
+                    int frameTrack = unify.fCount;
+
+                    if (allFacesComplete <= frameTrack)
+                    {
+                        // Run method if not broken
+                        allFacesComplete++;
+                        Destroy(completeTex);
+                        Debug.Log("All pixels rendered successfully.");
+                        OnComplete();
+                    }
+                }
+
+                Debug.Log("All pixels rendered successfully.");
+                // OnComplete();
             }
-
-            Debug.Log("All pixels rendered successfully.");
-            // OnComplete();
         }
-    }
 
-    private void OnComplete()
-    {
-
-        // Set complete render flag
-        renderComplete = true;
-
-
-        //SaveToFile(_color); 
-
-
-        // Debug message
-        int elapsedTime = (int)(Time.realtimeSinceStartup - startTime);
-        Debug.Log("Render complete!\nTime Elapsed: " + elapsedTime.ToString() + " s");
-
-        // Update coordinate time
-        if (is360)
-        {
-            completeFace++;
-        }
-        if (!is360)
-        {
-            
-            completeFace++;
-            SaveToFile(_color);
-        }
-        currentFrame++;
-        if (currentFrame >= numFrames)
+        private void OnComplete()
         {
 
-            
+            // Set complete render flag
+            renderComplete = true;
+
+
+            //SaveToFile(_color); 
+
+
+            // Debug message
+            int elapsedTime = (int)(Time.realtimeSinceStartup - startTime);
+            Debug.Log("Render complete!\nTime Elapsed: " + elapsedTime.ToString() + " s");
+
+            // Update coordinate time
+            if (is360)
+            {
+                completeFace++;
+            }
             if (!is360)
             {
+
+                completeFace++;
                 SaveToFile(_color);
             }
-
-            // Console readout
-            Debug.Log("Render cycle complete!");
-
-            // Quit application
-            if (exitOnComplete)
+            currentFrame++;
+            if (currentFrame >= numFrames)
             {
 
-                Application.Quit();
+
+                if (!is360)
+                {
+                    SaveToFile(_color);
+                }
+
+                // Console readout
+                Debug.Log("Render cycle complete!");
+
+                // Quit application
+                if (exitOnComplete)
+                {
+
+                    Application.Quit();
 
 #if UNITY_EDITOR
                 UnityEditor.EditorApplication.isPlaying = false;
 #endif
 
+                }
+
             }
-
-        }
-        else
-        {
-            // Advance time and reset settings
-            coordinateTime += (1f / framesPerSecond);
-
-            ResetSettings();
-        }
-    }
-
-    private void ResetSettings()
-    {
-        startRender = true;
-        renderComplete = false;
-        hardCheck = false;
-    }
-
-    private void SaveToFile(RenderTexture saveTexture)
-    {
-
-        // Create texture2D from render texture
-        Texture2D colorTex = RenderToTexture(saveTexture, TextureFormat.RGBAFloat);
-
-        // Encode to image format
-        byte[] bytes;
-        
-        bytes = colorTex.EncodeToJPG();
-
-        
-
-        Destroy(colorTex);
-
-        // Save to file
-        try
-        {
-
-            // Set up filename and save
-            string filename = "SingleCam_" + allFacesComplete + ".jpg";
-           
-
-            // Set up path to directory
-            string fullPath = Application.dataPath + "/SingleCamFrames/";
-            fullPath = string.IsNullOrEmpty(subfolder) ? fullPath : fullPath + subfolder + "/";
-
-            // Ensure existence of directory
-            if (!Directory.Exists(fullPath))
+            else
             {
-                Directory.CreateDirectory(fullPath);
+                // Advance time and reset settings
+                coordinateTime += (1f / framesPerSecond);
+
+                ResetSettings();
             }
-
-            // Save file
-            File.WriteAllBytes(fullPath + filename, bytes);
-            Debug.Log("File saved.");
-
         }
-        catch
+
+        private void ResetSettings()
+        {
+            startRender = true;
+            renderComplete = false;
+            hardCheck = false;
+        }
+
+        private void SaveToFile(RenderTexture saveTexture)
         {
 
-            Debug.LogWarning("ERROR: Failure to save file.");
-        }
-    }
+            // Create texture2D from render texture
+            Texture2D colorTex = RenderToTexture(saveTexture, TextureFormat.RGBAFloat);
 
+            // Encode to image format
+            byte[] bytes;
+
+            bytes = colorTex.EncodeToJPG();
+
+
+
+            Destroy(colorTex);
+
+            // Save to file
+            try
+            {
+
+                // Set up filename and save
+                string filename = "SingleCam_" + allFacesComplete + ".jpg";
+
+
+                // Set up path to directory
+                string fullPath = Application.dataPath + "/SingleCamFrames/";
+                fullPath = string.IsNullOrEmpty(subfolder) ? fullPath : fullPath + subfolder + "/";
+
+                // Ensure existence of directory
+                if (!Directory.Exists(fullPath))
+                {
+                    Directory.CreateDirectory(fullPath);
+                }
+
+                // Save file
+                File.WriteAllBytes(fullPath + filename, bytes);
+                Debug.Log("File saved.");
+
+            }
+            catch
+            {
+
+                Debug.LogWarning("ERROR: Failure to save file.");
+            }
+        }
+
+    
 }
 
 

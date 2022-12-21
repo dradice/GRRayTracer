@@ -109,22 +109,22 @@ float Dot(float4x4 g, float4 v1, float4 v2)
         float4 ep_0;
 
         ep_x[0] = 0.0;
-        ep_x[1] = -1.0;
+        ep_x[1] = 1.0;
         ep_x[2] = 0.0;
         ep_x[3] = 0.0;
 
         ep_y[0] = 0.0;
         ep_y[1] = 0.0;
-        ep_y[2] = -1.0;
+        ep_y[2] = 1.0;
         ep_y[3] = 0.0;
 
         ep_z[0] = 0.0;
         ep_z[1] = 0.0;
         ep_z[2] = 0.0;
-        ep_z[3] = -1.0;
+        ep_z[3] = 1.0;
 
         ep_0[0] = _Momentum[0];
-        ep_0[1] = _Momentum[1];
+        ep_0[1] = _Momentum[1]; //replace Momentum with FourVelocity
         ep_0[2] = _Momentum[2];
         ep_0[3] = _Momentum[3];
 
@@ -132,17 +132,29 @@ float Dot(float4x4 g, float4 v1, float4 v2)
 
         float4 e_0 = vNormalize(g, ep_0);
 
-        float4 ep_1 = vAdd(ep_x, vScale(Dot(g, e_0, ep_x), e_0));
+        float dot1_0 = Dot(g, e_0, ep_x);
+        for(int a = 0; a < 4; a++)
+        {
+            ep_x[a] += dot1_0 * e_0[a];
+        }
+        float4 e_1 = vNormalize(g, ep_x);
 
-        float4 e_1 = vNormalize(g, ep_1);
+        float dot2_0 = Dot(g, e_0, ep_y);
+        float dot2_1 = Dot(g, e_1, ep_y);
+        for(int a = 0; a < 4; a++)
+        {
+            ep_y[a] += dot2_0 * e_0[a] - dot2_1 * e_1[a];
+        }
+        float4 e_2 = vNormalize(g, ep_y);
 
-        float4 ep_2 = vAdd(vScale(-Dot(g, e_1, ep_y), ep_y), vAdd(ep_y, vScale(Dot(g, e_0, ep_y), e_0)));
-
-        float4 e_2 = vNormalize(g, ep_2);
-
-        float4 ep_3 = vAdd(vScale(-Dot(g, e_2, ep_z), e_2), vAdd(vScale(-Dot(g, e_1, ep_z), e_1), vAdd(ep_z, vScale(Dot(g, e_0, ep_z), e_0))));
-
-        float4 e_3 = vNormalize(g, ep_3);
+        float dot3_0 = Dot(g, e_0, ep_z);
+        float dot3_1 = Dot(g, e_1, ep_z);
+        float dot3_2 = Dot(g, e_2, ep_z);
+        for(int a = 0; a < 4; a++)
+        {
+            ep_z[a] += dot3_0 * e_0[a] - dot3_1 * e_1[a] - dot3_2 * e_2[a];
+        }
+        float4 e_3 = vNormalize(g, ep_z);
 
         tetrad[0] = e_0;
         tetrad[1] = e_1;
@@ -159,12 +171,10 @@ float Dot(float4x4 g, float4 v1, float4 v2)
 
         float4x4 e = CameraTetrad(x);
 
-      
-
-        k[0] = -1*(-e[0][0] + omega[0] * e[0][1] + omega[1] * e[0][2] + e[0][3] * omega[2]);
-        k[1] = -1*(-e[1][0] + omega[0] * e[1][1] + omega[1] * e[1][2] + e[1][3] * omega[2]);
-        k[2] = -1*(-e[2][0] + omega[0] * e[2][1] + omega[1] * e[2][2] + e[2][3] * omega[2]);
-        k[3] = -1*(-e[3][0] + omega[0] * e[3][1] + omega[1] * e[3][2] + e[3][3] * omega[2]);
+        k[0] = (e[0][0] - omega[0] * e[1][0] - omega[1] * e[2][0] - e[3][0] * omega[2]);
+        k[1] = (e[0][1] - omega[0] * e[1][1] - omega[1] * e[2][1] - e[3][1] * omega[2]);
+        k[2] = (e[0][2] - omega[0] * e[1][2] - omega[1] * e[2][2] - e[3][2] * omega[2]);
+        k[3] = (e[0][3] - omega[0] * e[1][3] - omega[1] * e[2][3] - e[3][3] * omega[2]);
 
         //return float4(0.0, k[1], k[2], k[3]);
         return k;
@@ -193,7 +203,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     // Pass direction to result
     Position[id.xy] = float4(0.0, _CameraPositionCartesian);
     //Direction[id.xy] = float4(0.0, -direction);
-    Direction[id.xy] = tetradDirection(float4(0.0, _CameraPositionCartesian), -direction);
+    Direction[id.xy] = tetradDirection(float4(0.0, _CameraPositionCartesian), direction);
     
     Color[id.xy] = float4(0.0, 0.0, 0.0, 0.0);
     isComplete[id.xy] = 0;

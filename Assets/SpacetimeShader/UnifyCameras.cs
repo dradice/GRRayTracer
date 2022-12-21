@@ -53,7 +53,7 @@ public class UnifyCameras : MonoBehaviour
 
         if (!is360 && (cfCount > facesCount || cbCount > facesCount || clCount > facesCount || crCount > facesCount || cuCount > facesCount || cdCount > facesCount))
         {
-            Debug.Log("captureframe!!!");
+           
             facesCount++;
             captureFrame++;
         }

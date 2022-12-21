@@ -8,6 +8,7 @@ static const float PI = 3.14159265f;
 // Output parameters
 RWTexture2D<float4> Position;
 RWTexture2D<float4> Direction;
+RWTexture2D<float4> Momentum;
 RWTexture2D<float4> Color;
 RWTexture2D<int> isComplete;
 RWTexture2D<float> TimeStep;
@@ -64,162 +65,213 @@ float Pow4(float input)
     return input * input * input * input;
 }
 
-    void SchwarzchildChristoffel(float x, float y, float z, inout float4x4 Christoffel[4])
-    {
-
-    float rho = sqrt((x * x) + (y * y) + (z * z));
+float Lapse(float t, float r)
+{
     float rho_s = horizonRadius;
+    //return ((1 - rho_s / r) / (1 + rho_s / r));
+    return 1.0;
     
-    float a = (rho - rho_s);
-    float b = Pow7(rho + rho_s);
-    float c = Pow3(rho);
-    float d = 1 + (rho_s / rho);
-    float e = (1 - Pow2(rho_s / rho));
-
-    float g_xtt = (2 * c * rho_s * a * x) / (b);
-    float g_ytt = (2 * c * rho_s * a * y) / (b);
-    float g_ztt = (2 * c * rho_s * a * z) / (b);
-
-    float g_ttx = (2 * rho_s * x) / (c * e);
-    float g_tty = (2 * rho_s * y) / (c * e);
-    float g_ttz = (2 * rho_s * z) / (c * e);
-
-    float g_xxx = -(2 * rho_s * x) / (c * d);
-    float g_yxy = g_xxx;
-    float g_zxz = g_xxx;
-    float g_xyy = -g_xxx;
-    float g_xzz = -g_xxx;
-
-    float g_yxx = (2 * rho_s * y) / (c * d);
-    float g_xxy = -g_yxx;
-    float g_yyy = -g_yxx;
-    float g_zyz = -g_yxx;
-    float g_yzz = g_yxx;
-
-    float g_zxx = (2 * rho_s * z) / (c * d);
-    float g_xxz = -g_zxx;
-    float g_zyy = g_zxx;
-    float g_yyz = -g_zxx;
-    float g_zzz = -g_zxx;
-
-    float4x4 c0 =
-    {
-        {0, g_ttx, g_tty, g_ttz},
-        {g_ttx, 0, 0, 0},
-        {g_tty, 0, 0, 0},
-        {g_ttz, 0, 0, 0}
-    };
-
-    float4x4 c1 =
-    {
-        {g_xtt, 0, 0, 0},
-        {0, g_xxx, g_xxy, g_xxz},
-        {0, g_xxy, g_xyy, 0},
-        {0, g_xxz, 0, g_xzz}
-    };
-
-    float4x4 c2 = 
-    {
-        {g_ytt, 0, 0, 0},
-        {0, g_yxx, g_yxy, 0},
-        {0, g_yxy, g_yyy, g_yyz},
-        {0, 0, g_yyz, g_yzz}
-    };
-
-    float4x4 c3 = 
-    {
-        {g_ztt, 0, 0, 0},
-        {0, g_zxx, 0, g_zxz},
-        {0, 0, g_zyy, g_zyz},
-        {0, g_zxz, g_zyz, g_zzz}
-    };
-
-
-    [unroll]
-    for(int a = 0; a < 4; a++){
-        [unroll]
-        for(int b = 0; b < 4; b++){
-            Christoffel[0][a][b] = c0[a][b];
-            Christoffel[1][a][b] = c1[a][b];
-            Christoffel[2][a][b] = c2[a][b];
-            Christoffel[3][a][b] = c3[a][b];
-        }
-    }
 }
 
-    // void NullCondition(inout float u[8])
-    // {
-    //     // float rho_s = horizonRadius;
-    //     // float rho = sqrt((u[1] * u[1]) + (u[2] * u[2]) + (u[3] * u[3]));
-        
-    //     // float g_tt = -(1 - rho_s / rho);
-    //     // float g_xx = Pow4((1 + rho_s / rho));
-    //     // float g_yy = g_xx;
-    //     // float g_zz = g_xx; 
+float Betar(float t, float r)
+{
+    return 0;
+}
 
-    //     // float u_t = sqrt(-((g_xx * Pow2(u[5])) + (g_yy * Pow2(u[6])) + (g_zz * Pow2(u[7]))) / g_tt);
-    //     // u[4] = u_t;
+float gammarr(float t, float r)
+{
+    float rho_s = horizonRadius;
+    //return Pow4(1 + (rho_s / r));
+    return 1.0;
+}
 
-    //     float4 x;
-        
-    //     [unroll]
-    //     for(int i = 0; i < 4; i++)
-    //     {
-    //         x[i] = u[i];
-    //     }
+float gammaT(float t, float r)
+{
+    float rho_s = horizonRadius;
+    //return Pow4(1 + (rho_s / r));
+    return 1.0;
+}
 
-    //     [unroll]
-    //     for(int i = 0; i < 3; i++)
-    //     {
-    //         u[4] += Metric(x) * u[i];
-    //     }
+float4x4 Jacobian(float4 x)
+{
+    float r = x[1];
+    float theta = x[2];
+    float phi = x[3];
 
-
-    // }
-
-    float4x4 Metric(float4 x)
+    float4x4 J =
     {
-        float rho_s = horizonRadius;
-        float rho = sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3])) + 1e-15;
-        
-        float g_tt = -Pow2((1 - rho_s / rho) / (1 + rho_s / rho));
-        
-        float g_xx = Pow4((1 + rho_s / rho));
-        float g_yy = g_xx;
-        float g_zz = g_xx; 
+        {1, 0, 0, 0},
+        {0, sin(theta)*cos(phi), sin(theta)*sin(phi), cos(theta)},
+        {0, (1/r)*cos(theta)*cos(phi), (1/r)*cos(theta)*sin(phi), -(1/r)*(sin(theta))},
+        {0, -(1/r)*(sin(phi)/(sin(theta))), (1/r)*cos(phi)/sin(theta), 0}
+    };
 
-        float4x4 g = 
+    return J;
+}
+
+float4x4 InverseJacobian(float4 x)
+{
+    float r = x[1];
+    float theta = x[2];
+    float phi = x[3];
+
+    float4x4 J_inv = 
+    {
+        {1, 0, 0, 0},
+        {0, sin(theta)*cos(phi), r*cos(theta)*cos(phi), -r*sin(theta)*sin(phi)},
+        {0, sin(theta)*sin(phi), r*cos(theta)*sin(phi), r*sin(theta)*cos(phi)},
+        {0, cos(theta), -r*sin(theta), 0}
+    };
+
+    return J_inv;
+}
+
+float3 CartesianToSpherical(float3 xyz)
+{
+    float r = sqrt(xyz[0]*xyz[0] + xyz[1]*xyz[1] + xyz[2]*xyz[2]);
+    float theta = acos(xyz[2]/r);
+    float phi = acos(xyz[0]/(max(sqrt(xyz[0]*xyz[0] + xyz[1]*xyz[1]), 1e-10)));
+
+    float3 x_spherical;
+    x_spherical[0] = max(r, 1e-10);
+    x_spherical[1] = theta;
+    x_spherical[2] = phi;
+
+    return x_spherical;
+}
+
+float3 SphericalToCartesian(float3 rThetaPhi)
+{
+
+}
+
+float4x4 Metric(float4 x)
+{
+    float3 xyz;
+    xyz[0] = x[1];
+    xyz[1] = x[2];
+    xyz[2] = x[3];
+    float3 rThetaPhi = CartesianToSpherical(xyz);
+    float4 x_spherical;
+    x_spherical[0] = x[0];
+    x_spherical[1] = rThetaPhi[0];
+    x_spherical[2] = rThetaPhi[1];
+    x_spherical[3] = rThetaPhi[2];
+    float r = rThetaPhi[0];
+    float alpha = Lapse(x[0], rThetaPhi[0]);
+    float betar = Betar(x[0], rThetaPhi[0]);
+    float g_rr = gammarr(x[0], rThetaPhi[0]);
+    float g_T = gammaT(x[0], rThetaPhi[0]);
+
+    float4x4 g_Spherical =
+    {{-Pow2(alpha * betar) * g_rr, g_rr * betar, 0, 0},
+    {g_rr * betar, g_rr, 0, 0},
+    {0, 0, g_T * r * r, 0},
+    {0, 0, 0, g_T * r * r * Pow2(sin(rThetaPhi[1]))}};
+
+    float4x4 g_Cartesian = 
+    {
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0}
+    };
+
+    float4x4 J = Jacobian(x_spherical);
+    [unroll]
+    for(int a = 0; a < 4; a++)
+    {
+        [unroll]
+        for(int b = 0; b < 4; b++)
         {
-            {g_tt, 0, 0, 0},
-            {0, g_xx, 0, 0},
-            {0, 0, g_yy, 0},
-            {0, 0, 0, g_zz}
-        };
+            
 
-        return g;
-    
+            [unroll]
+            for(int c = 0; c < 4; c++)
+            {
+                [unroll]
+                for(int d = 0; d < 4; d++)
+                {
+                    g_Cartesian[a][b] += g_Spherical[c][d] * J[c][a] * J[d][b];
+                }
+            }
+        }
     }
+
+    float4x4 g_flat = 
+    {
+        {-1, 0, 0, 0},
+        {0, 1, 0, 0},
+        {0, 0, 1, 0},
+        {0, 0, 0, 1}
+    };
+    
+    return g_Cartesian;
+}
 
     float4x4 InverseMetric(float4 x)
     {
-        float rho_s = horizonRadius;
-        float rho = sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3])) + 1e-15;
-        
-        float g_tt = -Pow2((1 - rho_s / rho) / (1 + rho_s / rho));
-        float g_xx = Pow4((1 + rho_s / rho));
-        float g_yy = g_xx;
-        float g_zz = g_xx; 
+        float3 xyz;
+        xyz[0] = x[1];
+        xyz[1] = x[2];
+        xyz[2] = x[3];
+        float3 rThetaPhi = CartesianToSpherical(xyz);
+        float4 x_spherical;
+        x_spherical[0] = x[0];
+        x_spherical[1] = rThetaPhi[0];
+        x_spherical[2] = rThetaPhi[1];
+        x_spherical[3] = rThetaPhi[2];
+        float r = rThetaPhi[0];
+        float theta = rThetaPhi[1];
 
-        float4x4 g = 
+        float alpha = Lapse(x[0], rThetaPhi[0]);
+        float betar = Betar(x[0], rThetaPhi[0]);
+        float g_rr = gammarr(x[0], rThetaPhi[0]);
+        float g_T = gammaT(x[0], rThetaPhi[0]);
+
+        float4x4 g_Spherical =
+        {{-1 / Pow2(alpha), betar / (Pow2(alpha)), 0, 0},
+        {betar / Pow2(alpha), (1 / (g_rr)) - Pow2(betar/alpha), 0, 0},
+        {0, 0, 1 / (g_T * r * r), 0},
+        {0, 0, 0, 1 / (g_T * Pow2(r * sin(theta)))}};
+
+        float4x4 g_Cartesian = 
         {
-            {1 / g_tt, 0, 0, 0},
-            {0, 1 / g_xx, 0, 0},
-            {0, 0, 1 / g_yy, 0},
-            {0, 0, 0, 1 / g_zz}
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0},
+        {0, 0, 0, 0}
+        };
+        float4x4 J_inv = InverseJacobian(x_spherical);
+
+        [unroll]
+        for(int a = 0; a < 4; a++)
+        {
+            [unroll]
+            for(int b = 0; b < 4; b++)
+            {
+                g_Cartesian[a][b] = 0;
+                [unroll]
+                for(int c = 0; c < 4; c++)
+                {
+                    [unroll]
+                    for(int d = 0; d < 4; d++)
+                    {
+                        g_Cartesian[a][b] += g_Spherical[c][d] * J_inv[a][c] * J_inv[b][d];
+                    }
+                }
+            }
+        }
+
+            float4x4 g_flat = 
+        {
+            {-1, 0, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 1, 0},
+            {0, 0, 0, 1}
         };
 
-        return g;
-    
+        return g_Cartesian;
     }
     
     float4x4 Derivative(float4 x, int a)
@@ -247,43 +299,6 @@ float Pow4(float input)
         
         return dg;
     }
-
-    // void ComputeChristoffel(float4 x, inout float4x4 Christoffel[4])
-    // {
-    //     [unroll]
-    //     for(int a = 0; a < 4; a++)
-    //     {
-    //         for(int b = 0; b < 4; b++)
-    //         {
-    //             for(int c = 0; c < 4; c++)
-    //             {
-    //                 Christoffel[a][b][c] = 0.0;
-    //             }
-    //         }
-    //     }
-
-    //     [unroll(3)]
-    //     for(int a = 0; a < 4; a++)
-    //     {
-    //         [unroll]
-    //         for(int b = 0; b < 4; b++)
-    //         {
-    //             [unroll]
-    //             for(int c = 0; c < 4; c++)
-    //             {
-    //                 [unroll]
-    //                 for(int d = 0; d < 4; d++)
-    //                 {
-    //                     float4x4 g = Metric(x);
-    //                     float4x4 g_i = Inverse(g);
-
-    //                     Christoffel[a][b][c] += 0.5f * (g_i[a][d]) * (Derivative(x, c, d, b) + Derivative(x, b, d, c) - Derivative(x, d, b, c));
-                        
-    //                 }
-    //             }
-    //         }
-    //     }
-    // }
 
     bool ShootRay(inout float dt, float tol, inout float4 x_u, inout float4 u_u)
     { 

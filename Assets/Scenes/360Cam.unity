@@ -134,6 +134,7 @@ GameObject:
   - component: {fileID: 37627822}
   - component: {fileID: 37627824}
   - component: {fileID: 37627823}
+  - component: {fileID: 37627825}
   m_Layer: 0
   m_Name: 360Cam
   m_TagString: Untagged
@@ -175,6 +176,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   facesCount: 0
   captureFrame: 0
+  is360: 0
 --- !u!114 &37627824
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -202,6 +204,28 @@ MonoBehaviour:
   cubeMapLeft: {fileID: 8400000, guid: 65f3174b1d069c74d87ffd57e5e68955, type: 2}
   equirectRT: {fileID: 8400000, guid: df088d08592f7144abea50949998d56b, type: 2}
   fCount: 0
+--- !u!114 &37627825
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 37627821}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18649578ef176424e8b5cc0e81ba4cdf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  framerate: 3
+  timeStep: 0.0001
+  errorTolerance: 0.001
+  t_0: 0
+  rho_s: 0
+  position: []
+  momentum: []
+  frameComplete: 0
+  numFramesCheck: 0
+  numFrames: 0
 --- !u!1 &989463618
 GameObject:
   m_ObjectHideFlags: 0
@@ -249,7 +273,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
-  skyboxTexture: {fileID: 2800000, guid: 1d7981b10e4f96b42a7361f120bec5f0, type: 3}
+  skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
   timeStep: 0.001
   escapeDistance: 10000
   errorTolerance: 0.001
@@ -259,12 +283,14 @@ MonoBehaviour:
   overSample: 4
   maxSoftPasses: 10
   maxPasses: 100
+  subfolder: 
   exitOnComplete: 0
   completeFace: 0
   diskRadius: 3
   horizonRadius: 0.5
   camChoice: 0
   is360: 1
+  _momentum: {x: 0, y: 0, z: 0, w: 0}
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
@@ -367,7 +393,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
-  skyboxTexture: {fileID: 2800000, guid: 1d7981b10e4f96b42a7361f120bec5f0, type: 3}
+  skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
   timeStep: 0.001
   escapeDistance: 10000
   errorTolerance: 0.001
@@ -377,12 +403,14 @@ MonoBehaviour:
   overSample: 4
   maxSoftPasses: 10
   maxPasses: 100
+  subfolder: 
   exitOnComplete: 0
   completeFace: 0
   diskRadius: 3
   horizonRadius: 0.5
   camChoice: 0
   is360: 1
+  _momentum: {x: 0, y: 0, z: 0, w: 0}
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
@@ -580,7 +608,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
-  skyboxTexture: {fileID: 2800000, guid: 1d7981b10e4f96b42a7361f120bec5f0, type: 3}
+  skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
   timeStep: 0.001
   escapeDistance: 10000
   errorTolerance: 0.001
@@ -590,12 +618,14 @@ MonoBehaviour:
   overSample: 4
   maxSoftPasses: 10
   maxPasses: 100
+  subfolder: 
   exitOnComplete: 0
   completeFace: 0
   diskRadius: 3
   horizonRadius: 0.5
   camChoice: 0
   is360: 1
+  _momentum: {x: 0, y: 0, z: 0, w: 0}
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
@@ -698,7 +728,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
-  skyboxTexture: {fileID: 2800000, guid: 1d7981b10e4f96b42a7361f120bec5f0, type: 3}
+  skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
   timeStep: 0.001
   escapeDistance: 10000
   errorTolerance: 0.001
@@ -708,12 +738,14 @@ MonoBehaviour:
   overSample: 4
   maxSoftPasses: 10
   maxPasses: 100
+  subfolder: 
   exitOnComplete: 0
   completeFace: 0
   diskRadius: 3
   horizonRadius: 0.5
   camChoice: 0
   is360: 1
+  _momentum: {x: 0, y: 0, z: 0, w: 0}
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
@@ -816,7 +848,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
-  skyboxTexture: {fileID: 2800000, guid: 1d7981b10e4f96b42a7361f120bec5f0, type: 3}
+  skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
   timeStep: 0.001
   escapeDistance: 10000
   errorTolerance: 0.001
@@ -826,12 +858,14 @@ MonoBehaviour:
   overSample: 4
   maxSoftPasses: 10
   maxPasses: 100
+  subfolder: 
   exitOnComplete: 0
   completeFace: 0
   diskRadius: 3
   horizonRadius: 0.5
   camChoice: 0
   is360: 1
+  _momentum: {x: 0, y: 0, z: 0, w: 0}
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
@@ -934,7 +968,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
-  skyboxTexture: {fileID: 2800000, guid: 8bd547b64ae9be343a5752a2af12fc22, type: 3}
+  skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
   timeStep: 0.001
   escapeDistance: 10000
   errorTolerance: 0.001
@@ -944,12 +978,14 @@ MonoBehaviour:
   overSample: 4
   maxSoftPasses: 10
   maxPasses: 100
+  subfolder: 
   exitOnComplete: 0
   completeFace: 0
   diskRadius: 3
-  horizonRadius: 0.5
+  horizonRadius: 0
   camChoice: 0
   is360: 1
+  _momentum: {x: 0, y: 0, z: 0, w: 0}
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0

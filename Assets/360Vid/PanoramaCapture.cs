@@ -48,7 +48,7 @@ public class PanoramaCapture : MonoBehaviour
         }
         if (frameTrack > fCount)
         {
-            Debug.Log(":)");
+            
             fCount = frameTrack;
             if (is360)
             {

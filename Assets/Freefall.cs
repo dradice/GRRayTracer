@@ -165,20 +165,6 @@ public class Freefall : MonoBehaviour
         g[2, 2] = g_yy;
         g[3, 3] = g_zz;
 
-        for(int i = 0; i < 4; i++)
-        {
-            for(int j = 0; j < 4; j++)
-            {
-                /*if(g[i,j] == 0.0)
-                {
-                    Debug.Log("g at " + i + ", " + j + " is 0.");
-                }
-                else
-                {
-                    Debug.Log("g at " + i + ", " + j + " is " + g[i, j]);
-                }*/
-            }
-        }
     }
 
     void InverseMetric(float[] x, ref float[,] g)
@@ -424,7 +410,6 @@ public class Freefall : MonoBehaviour
 
             if (isGood)
             {
-                Debug.Log("movin");
                 t_0 += timeStep;
                 position = x;
                 momentum = u;

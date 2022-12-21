@@ -203,6 +203,7 @@ MonoBehaviour:
   horizonRadius: 0.5
   camChoice: 1
   is360: 0
+  _momentum: {x: 0, y: 0, z: 0, w: 0}
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
@@ -338,6 +339,7 @@ MonoBehaviour:
   horizonRadius: 0.5
   camChoice: 1
   is360: 0
+  _momentum: {x: 0, y: 0, z: 0, w: 0}
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
@@ -473,6 +475,7 @@ MonoBehaviour:
   horizonRadius: 0.5
   camChoice: 1
   is360: 0
+  _momentum: {x: 0, y: 0, z: 0, w: 0}
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
@@ -608,6 +611,7 @@ MonoBehaviour:
   horizonRadius: 0.5
   camChoice: 1
   is360: 0
+  _momentum: {x: 0, y: 0, z: 0, w: 0}
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
@@ -731,7 +735,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6e21416a8125af4a9cb5328cd323f6a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  front: {fileID: 1920951165}
+  front: {fileID: 1507237127}
   back: {fileID: 0}
   left: {fileID: 0}
   right: {fileID: 0}
@@ -933,7 +937,7 @@ MonoBehaviour:
   updateInterval: 15
   overSample: 4
   maxSoftPasses: 1000
-  maxPasses: 1500
+  maxPasses: 15000
   subfolder: 
   exitOnComplete: 0
   completeFace: 0
@@ -941,6 +945,7 @@ MonoBehaviour:
   horizonRadius: 0.5
   camChoice: 1
   is360: 0
+  _momentum: {x: 0, y: 0, z: 0, w: 0}
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
@@ -1104,7 +1109,7 @@ MonoBehaviour:
   updateInterval: 15
   overSample: 4
   maxSoftPasses: 1000
-  maxPasses: 1500
+  maxPasses: 15000
   subfolder: 
   exitOnComplete: 0
   completeFace: 0
@@ -1112,6 +1117,7 @@ MonoBehaviour:
   horizonRadius: 0.5
   camChoice: 1
   is360: 0
+  _momentum: {x: 0, y: 0, z: 0, w: 0}
   currentPass: 0
   currentFrame: 0
   allFacesComplete: 0
