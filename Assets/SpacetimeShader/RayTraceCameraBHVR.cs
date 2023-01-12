@@ -163,7 +163,6 @@ public class RayTraceCameraBHVR : MonoBehaviour
         Debug.Log("running360");
         if (is360)
         {
-            Debug.Log("running2");
 
             PanoramaCapture unify = multiCam.GetComponent<PanoramaCapture>();
             int frameTrack = unify.fCount;
@@ -194,7 +193,6 @@ public class RayTraceCameraBHVR : MonoBehaviour
                 }
                 else
                 {
-                    Debug.Log("running3");
                     // March rays
                     UpdateRay();
                     currentPass++;

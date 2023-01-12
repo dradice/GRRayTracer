@@ -94,16 +94,22 @@ float gammaT(float t, float r)
 
 float4x4 Jacobian(float4 x)
 {
-    float r = x[1];
-    float theta = x[2];
+    float r = max(1e-10, x[1]);
+    float theta = max(1e-10, min(x[2], PI*(1 - 1e-7)));
     float phi = x[3];
+    float ir        = 1.0/r;
+    float sin_theta = sin(theta);
+    float cos_theta = cos(theta);
+    float csc_theta = 1.0/sin_theta;
+    float sin_phi   = sin(phi);
+    float cos_phi   = cos(phi);
 
     float4x4 J =
     {
         {1, 0, 0, 0},
-        {0, sin(theta)*cos(phi), sin(theta)*sin(phi), cos(theta)},
-        {0, (1/r)*cos(theta)*cos(phi), (1/r)*cos(theta)*sin(phi), -(1/r)*(sin(theta))},
-        {0, -(1/r)*(sin(phi)/(sin(theta))), (1/r)*cos(phi)/sin(theta), 0}
+        {0,  sin_theta * cos_phi, sin_theta * sin_phi, cos_theta},
+        {0, ir * cos_theta * cos_phi, ir * cos_theta * sin_phi, - ir * sin_theta},
+        {0, - ir * csc_theta * sin_phi, ir * csc_theta * cos_phi, 0}
     };
 
     return J;
@@ -114,13 +120,17 @@ float4x4 InverseJacobian(float4 x)
     float r = x[1];
     float theta = x[2];
     float phi = x[3];
+    float sin_theta = sin(theta);
+    float cos_theta = cos(theta);
+    float sin_phi   = sin(phi);
+    float cos_phi   = cos(phi);
 
-    float4x4 J_inv = 
+    float4x4 J_inv =
     {
         {1, 0, 0, 0},
-        {0, sin(theta)*cos(phi), r*cos(theta)*cos(phi), -r*sin(theta)*sin(phi)},
-        {0, sin(theta)*sin(phi), r*cos(theta)*sin(phi), r*sin(theta)*cos(phi)},
-        {0, cos(theta), -r*sin(theta), 0}
+        {0, sin_theta * cos_phi, r * cos_theta * cos_phi, - r * sin_theta * sin_phi},
+        {0, sin_theta * sin_phi, r * cos_theta * sin_phi, r * sin_theta * cos_phi},
+        {0, cos_theta, - r * sin_theta, 0}
     };
 
     return J_inv;
@@ -128,9 +138,9 @@ float4x4 InverseJacobian(float4 x)
 
 float3 CartesianToSpherical(float3 xyz)
 {
-    float r = sqrt(xyz[0]*xyz[0] + xyz[1]*xyz[1] + xyz[2]*xyz[2]);
-    float theta = acos(xyz[2]/r);
-    float phi = acos(xyz[0]/(max(sqrt(xyz[0]*xyz[0] + xyz[1]*xyz[1]), 1e-10)));
+    float r = max(1e-10, sqrt(xyz[0]*xyz[0] + xyz[1]*xyz[1] + xyz[2]*xyz[2]));
+    float theta = max(1e-10, min(PI - 1e-6, acos(xyz[2]/r)));
+    float phi = atan2(xyz[1], xyz[0]);
 
     float3 x_spherical;
     x_spherical[0] = max(r, 1e-10);
@@ -164,10 +174,12 @@ float4x4 Metric(float4 x)
     float g_T = gammaT(x[0], rThetaPhi[0]);
 
     float4x4 g_Spherical =
-    {{-Pow2(alpha * betar) * g_rr, g_rr * betar, 0, 0},
+    {
+    {-(Pow2(alpha) + g_rr * Pow2(betar)), g_rr * betar, 0, 0},
     {g_rr * betar, g_rr, 0, 0},
     {0, 0, g_T * r * r, 0},
-    {0, 0, 0, g_T * r * r * Pow2(sin(rThetaPhi[1]))}};
+    {0, 0, 0, g_T * r * r * Pow2(sin(rThetaPhi[1]))}
+    };
 
     float4x4 g_Cartesian = 
     {
@@ -177,7 +189,17 @@ float4x4 Metric(float4 x)
         {0, 0, 0, 0}
     };
 
+    float4x4 g_flat = 
+    {
+        {-1, 0, 0, 0},
+        {0, 1, 0, 0},
+        {0, 0, 1, 0},
+        {0, 0, 0, 1}
+    };
+    return g_flat; 
+
     float4x4 J = Jacobian(x_spherical);
+    
     [unroll]
     for(int a = 0; a < 4; a++)
     {
@@ -197,14 +219,6 @@ float4x4 Metric(float4 x)
             }
         }
     }
-
-    float4x4 g_flat = 
-    {
-        {-1, 0, 0, 0},
-        {0, 1, 0, 0},
-        {0, 0, 1, 0},
-        {0, 0, 0, 1}
-    };
     
     return g_Cartesian;
 }
@@ -230,10 +244,12 @@ float4x4 Metric(float4 x)
         float g_T = gammaT(x[0], rThetaPhi[0]);
 
         float4x4 g_Spherical =
-        {{-1 / Pow2(alpha), betar / (Pow2(alpha)), 0, 0},
+        {
+        {-1 / Pow2(alpha), betar / (Pow2(alpha)), 0, 0},
         {betar / Pow2(alpha), (1 / (g_rr)) - Pow2(betar/alpha), 0, 0},
         {0, 0, 1 / (g_T * r * r), 0},
-        {0, 0, 0, 1 / (g_T * Pow2(r * sin(theta)))}};
+        {0, 0, 0, 1 / (g_T * Pow2(r * sin(theta)))}
+        };
 
         float4x4 g_Cartesian = 
         {
@@ -242,8 +258,17 @@ float4x4 Metric(float4 x)
         {0, 0, 0, 0},
         {0, 0, 0, 0}
         };
-        float4x4 J_inv = InverseJacobian(x_spherical);
 
+        float4x4 g_flat = 
+        {
+            {-1, 0, 0, 0},
+            {0, 1, 0, 0},
+            {0, 0, 1, 0},
+            {0, 0, 0, 1}
+        };
+        //return g_flat; 
+        float4x4 J_inv = InverseJacobian(x_spherical);
+        
         [unroll]
         for(int a = 0; a < 4; a++)
         {
@@ -257,20 +282,11 @@ float4x4 Metric(float4 x)
                     [unroll]
                     for(int d = 0; d < 4; d++)
                     {
-                        g_Cartesian[a][b] += g_Spherical[c][d] * J_inv[a][c] * J_inv[b][d];
+                        g_Cartesian[a][b] += g_Spherical[c][d] * J_inv[c][a] * J_inv[d][b];
                     }
                 }
             }
         }
-
-            float4x4 g_flat = 
-        {
-            {-1, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 0, 1, 0},
-            {0, 0, 0, 1}
-        };
-
         return g_Cartesian;
     }
     
@@ -462,127 +478,6 @@ float4x4 Metric(float4 x)
         dt *= 0.5;
     } 
     return isGood;  
-    // float k[8];
-
-    // float u_star[8];
-
-    // float u_euler[8];
-
-    // float error;
-
-    // float u_trial[8];
-
-    // float dt_min = 1e-10;
-
-    // float4x4 Christoffel[4];
-
-    // bool isGood = false;
-
-
-    //     //SchwarzchildChristoffel(x[1], x[2], x[3], Christoffel);
-        
-    //     ComputeChristoffel(x, Christoffel);
-  
-    
-    //     [unroll]
-    //     for(int a = 0; a < 4; a++){
-    //         k[a] = -u[a];
-    //         k[a + 4] = 0.0;
-       
-    //         [unroll]
-    //         for(int b = 0; b < 4; b++){
-                
-    //             [unroll]
-    //             for(int c = 0; c < 4; c++){
-    //                 k[a + 4] += (Christoffel[a])[b][c] * u[b] * u[c];
-    //             }
-    //         }
-    //     }
-            
-     
-        
-
-    //     [unroll]
-    //     for(int i = 0; i < 4; i++){
-    //         u_star[i] = x[i] + (0.5)*dt*k[i];
-    //         u_euler[i] = x[i] + dt*k[i];
-    //     }
-
-    //     [unroll]
-    //     for(int i = 4; i < 8; i++){
-    //         u_star[i] = u[i - 4] + (0.5)*dt*k[i];
-    //         u_euler[i] = u[i - 4] + dt*k[i];
-    //     }
-
-    //     float4 u_star_x;
-    //     u_star_x[0] = u_star[0];
-    //     u_star_x[1] = u_star[1];
-    //     u_star_x[2] = u_star[2];
-    //     u_star_x[3] = u_star[3];
-
-    //     ComputeChristoffel(u_star_x, Christoffel);
-  
-        // [unroll]
-        // for(int a = 0; a < 4; a++){
-        //     k[a] = -u_star[a+4];
-        //     k[a + 4] = 0.0;
-   
-        //     [unroll]
-        //     for(int b = 0; b < 4; b++){
-                
-        //         [unroll]
-        //         for(int c = 0; c < 4; c++){
-        //             k[a + 4] += (Christoffel[a])[b][c] * u_star[b + 4] * u_star[c + 4];
-        //         }
-        //     }
-        // }
-        
-        // [unroll]
-        // for(int i = 0; i < 4; i++){
-        //     u_trial[i] = x[i] + dt*k[i];
-        // }
-        // [unroll]
-        // for(int i = 4; i < 8; i++){
-        //     u_trial[i] = u[i-4] + dt*k[i];
-
-        // }
-
-        // error = 0.0;
-        // [unroll]
-        // for(int i = 1; i < 4; i++){
-        //     error += abs(u_trial[i] - u_euler[i]);
-        // }
-
-        // if(error < tol || dt <= dt_min){
-        //     isGood = true;
-        //     [unroll]
-        //     for(int i = 0; i < 4; i++){
-        //         x[i] = u_trial[i];
-        //     }
-            
-        //     NullCondition(u_trial);
-
-        //     [unroll]
-        //     for(int i = 4; i < 8; i++){
-                
-        //         u[i-4] = u_trial[i];
-            
-        //     }
-            
-            
-        //     if(4*error < tol){
-        //         dt = dt * 2.0;
-        //     }
-        // }
-        // else if(error > tol)
-        // {
-
-        //     dt *= 0.5;
-        //     //dt = max(dt, 1e-3);
-        // } 
-        // return isGood;  
-    
-    
 }
 
 bool diskHit(float4 x, float dist)

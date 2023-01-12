@@ -736,11 +736,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   front: {fileID: 1507237127}
-  back: {fileID: 0}
-  left: {fileID: 0}
-  right: {fileID: 0}
-  up: {fileID: 0}
-  down: {fileID: 0}
+  back: {fileID: 1507237127}
+  left: {fileID: 69414072}
+  right: {fileID: 100707191}
+  up: {fileID: 151272454}
+  down: {fileID: 376621357}
   faceF: {fileID: 8600000, guid: 22408e97a140df64abff3e9111a26432, type: 2}
   faceB: {fileID: 8400000, guid: efe364e62e33ea74fa45037ef79d2e0f, type: 2}
   faceL: {fileID: 8400000, guid: d7c33710db60fc6479cc95dd112514f8, type: 2}
@@ -1100,7 +1100,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
-  skyboxTexture: {fileID: 2800000, guid: d898cbe13657e20438d86a84393d7086, type: 3}
+  skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
   timeStep: 0.001
   escapeDistance: 10000
   errorTolerance: 0.001
@@ -1109,7 +1109,7 @@ MonoBehaviour:
   updateInterval: 15
   overSample: 4
   maxSoftPasses: 1000
-  maxPasses: 15000
+  maxPasses: 1500
   subfolder: 
   exitOnComplete: 0
   completeFace: 0
