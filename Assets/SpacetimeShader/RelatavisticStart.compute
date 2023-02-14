@@ -1,6 +1,6 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
-#pragma shader_feature STEREO_CUBEMAP_RENDER
+//#pragma shader_feature STEREO_CUBEMAP_RENDER
 
 // Output parameters
 RWTexture2D<float4> Position;
@@ -20,7 +20,7 @@ float errorTolerance;
 float horizonRadius;
 
 //light ray data
-float4 derivatives = (0.0f, 0.0f, 0.0f, 0.0f);
+float4 derivatives = {0.0f, 0.0f, 0.0f, 0.0f};
 
 float Dot(float4x4 g, float4 v1, float4 v2)
     {
@@ -80,6 +80,7 @@ float Dot(float4x4 g, float4 v1, float4 v2)
         [unroll]
         for (int a = 0; a < 4; a++)
         {
+            [unroll]
             for (int b = 0; b < 4; b++)
             {
                 g[a][b] = 0.0;
@@ -96,6 +97,7 @@ float Dot(float4x4 g, float4 v1, float4 v2)
     float4x4 CameraTetrad(float4 x)
     {
         float4x4 tetrad;
+        int a;
 
         // float4 ep_x = (0.0, 1.0, 0.0, 0.0);
         // float4 ep_y = (0.0, 0.0, 1.0, 0.0);
@@ -133,7 +135,8 @@ float Dot(float4x4 g, float4 v1, float4 v2)
         float4 e_0 = vNormalize(g, ep_0);
 
         float dot1_0 = Dot(g, e_0, ep_x);
-        for(int a = 0; a < 4; a++)
+        [unroll]
+        for(a = 0; a < 4; a++)
         {
             ep_x[a] += dot1_0 * e_0[a];
         }
@@ -141,7 +144,8 @@ float Dot(float4x4 g, float4 v1, float4 v2)
 
         float dot2_0 = Dot(g, e_0, ep_y);
         float dot2_1 = Dot(g, e_1, ep_y);
-        for(int a = 0; a < 4; a++)
+        [unroll]
+        for(a = 0; a < 4; a++)
         {
             ep_y[a] += dot2_0 * e_0[a] - dot2_1 * e_1[a];
         }
@@ -150,7 +154,8 @@ float Dot(float4x4 g, float4 v1, float4 v2)
         float dot3_0 = Dot(g, e_0, ep_z);
         float dot3_1 = Dot(g, e_1, ep_z);
         float dot3_2 = Dot(g, e_2, ep_z);
-        for(int a = 0; a < 4; a++)
+        [unroll]
+        for(a = 0; a < 4; a++)
         {
             ep_z[a] += dot3_0 * e_0[a] - dot3_1 * e_1[a] - dot3_2 * e_2[a];
         }

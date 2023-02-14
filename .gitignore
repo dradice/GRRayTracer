@@ -74,12 +74,8 @@ crashlytics-build.properties
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
 
-<<<<<<< Updated upstream
 # 360 video frames
 *.jpeg
 *.jpeg.meta
-=======
-# Rendered Images
-*.jpeg
-*.jpeg.meta
->>>>>>> Stashed changes
+*.jpg
+*.jpg.meta

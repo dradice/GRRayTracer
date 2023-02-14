@@ -1,6 +1,6 @@
 // Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
-#pragma shader_feature STEREO_CUBEMAP_RENDER
+//#pragma shader_feature STEREO_CUBEMAP_RENDER
 
 // Constants
 static const float PI = 3.14159265f;
@@ -67,10 +67,9 @@ float Pow4(float input)
 
 float Lapse(float t, float r)
 {
+    //return 1;
     float rho_s = horizonRadius;
-    //return ((1 - rho_s / r) / (1 + rho_s / r));
-    return 1.0;
-    
+    return ((1 - rho_s / r) / (1 + rho_s / r));
 }
 
 float Betar(float t, float r)
@@ -80,142 +79,152 @@ float Betar(float t, float r)
 
 float gammarr(float t, float r)
 {
+    //return 1;
     float rho_s = horizonRadius;
-    //return Pow4(1 + (rho_s / r));
-    return 1.0;
+    return Pow4(1 + (rho_s / r));
 }
 
 float gammaT(float t, float r)
 {
+    //return 1;
     float rho_s = horizonRadius;
-    //return Pow4(1 + (rho_s / r));
-    return 1.0;
+    return Pow4(1 + (rho_s / r));
 }
 
-float4x4 Jacobian(float4 x)
+float4x4 Jacobian(float r, float sin_theta, float cos_theta, float sin_phi, float cos_phi)
 {
-    float r = max(1e-10, x[1]);
-    float theta = max(1e-10, min(x[2], PI*(1 - 1e-7)));
-    float phi = x[3];
     float ir        = 1.0/r;
-    float sin_theta = sin(theta);
-    float cos_theta = cos(theta);
     float csc_theta = 1.0/sin_theta;
-    float sin_phi   = sin(phi);
-    float cos_phi   = cos(phi);
 
     float4x4 J =
     {
-        {1, 0, 0, 0},
-        {0,  sin_theta * cos_phi, sin_theta * sin_phi, cos_theta},
-        {0, ir * cos_theta * cos_phi, ir * cos_theta * sin_phi, - ir * sin_theta},
-        {0, - ir * csc_theta * sin_phi, ir * csc_theta * cos_phi, 0}
+        {1., 0., 0., 0.},
+        {0.,  sin_theta * cos_phi, sin_theta * sin_phi, cos_theta},
+        {0., ir * cos_theta * cos_phi, ir * cos_theta * sin_phi, - ir * sin_theta},
+        {0., - ir * csc_theta * sin_phi, ir * csc_theta * cos_phi, 0.}
     };
 
     return J;
 }
 
-float4x4 InverseJacobian(float4 x)
+float4x4 InverseJacobian(float r, float sin_theta, float cos_theta, float sin_phi, float cos_phi)
 {
-    float r = x[1];
-    float theta = x[2];
-    float phi = x[3];
-    float sin_theta = sin(theta);
-    float cos_theta = cos(theta);
-    float sin_phi   = sin(phi);
-    float cos_phi   = cos(phi);
-
-    float4x4 J_inv =
+     float4x4 J_inv =
     {
-        {1, 0, 0, 0},
-        {0, sin_theta * cos_phi, r * cos_theta * cos_phi, - r * sin_theta * sin_phi},
-        {0, sin_theta * sin_phi, r * cos_theta * sin_phi, r * sin_theta * cos_phi},
-        {0, cos_theta, - r * sin_theta, 0}
+        {1., 0., 0., 0.},
+        {0., sin_theta * cos_phi, r * cos_theta * cos_phi, - r * sin_theta * sin_phi},
+        {0., sin_theta * sin_phi, r * cos_theta * sin_phi, r * sin_theta * cos_phi},
+        {0., cos_theta, - r * sin_theta, 0.}
     };
 
     return J_inv;
 }
 
-float3 CartesianToSpherical(float3 xyz)
+/*
+void CartesianToSpherical(float3 xyz, out float r,
+	out float sin_theta, out float cos_theta,
+	out float sin_phi, out float cos_phi)
 {
-    float r = max(1e-10, sqrt(xyz[0]*xyz[0] + xyz[1]*xyz[1] + xyz[2]*xyz[2]));
-    float theta = max(1e-10, min(PI - 1e-6, acos(xyz[2]/r)));
-    float phi = atan2(xyz[1], xyz[0]);
-
-    float3 x_spherical;
-    x_spherical[0] = max(r, 1e-10);
-    x_spherical[1] = theta;
-    x_spherical[2] = phi;
-
-    return x_spherical;
+    r = max(1e-6,sqrt(xyz[0]*xyz[0] + xyz[1]*xyz[1] + xyz[2]*xyz[2]));
+    cos_theta = xyz[2]/r;
+    sin_theta = max(1e-6, sqrt(1. - cos_theta*cos_theta));
+    cos_phi = xyz[0]/(r*sin_theta);
+    sin_phi = xyz[1]/(r*sin_theta);
 }
 
 float3 SphericalToCartesian(float3 rThetaPhi)
 {
 
 }
+*/
 
 float4x4 Metric(float4 x)
 {
-    float3 xyz;
-    xyz[0] = x[1];
-    xyz[1] = x[2];
-    xyz[2] = x[3];
-    float3 rThetaPhi = CartesianToSpherical(xyz);
-    float4 x_spherical;
-    x_spherical[0] = x[0];
-    x_spherical[1] = rThetaPhi[0];
-    x_spherical[2] = rThetaPhi[1];
-    x_spherical[3] = rThetaPhi[2];
-    float r = rThetaPhi[0];
-    float alpha = Lapse(x[0], rThetaPhi[0]);
-    float betar = Betar(x[0], rThetaPhi[0]);
-    float g_rr = gammarr(x[0], rThetaPhi[0]);
-    float g_T = gammaT(x[0], rThetaPhi[0]);
+    /*float4x4 g_flat = 
+    {
+        {-1., 0., 0., 0.},
+        {0., 1., 0., 0.},
+        {0., 0., 1., 0.},
+        {0., 0., 0., 1.}
+    };
+    return g_flat;*/
+    
+    int a, b, c, d;
+
+    float r = max(1e-6,sqrt(x[1]*x[1] + x[2]*x[2] + x[3]*x[3]));
+    float theta = max(1e-6, min(PI - 1e-6, acos(x[3]/r)));
+    float phi;
+    if (x[2] == x[1] && x[1] == 0) {
+    	phi = 0.0;
+    }
+    else {
+	phi = atan2(x[2], x[1]);
+    }
+    float cos_theta = cos(theta);
+    float sin_theta = sin(theta);
+    float cos_phi   = cos(phi);
+    float sin_phi   = sin(phi);
+    float ir        = 1.0/r;
+    float csc_theta = 1.0/sin_theta;
+    
+    float alpha = Lapse(x[0], r);
+    float betar = Betar(x[0], r);
+    float g_rr = gammarr(x[0], r);
+    float g_T = gammaT(x[0], r);
 
     float4x4 g_Spherical =
     {
-    {-(Pow2(alpha) + g_rr * Pow2(betar)), g_rr * betar, 0, 0},
-    {g_rr * betar, g_rr, 0, 0},
-    {0, 0, g_T * r * r, 0},
-    {0, 0, 0, g_T * r * r * Pow2(sin(rThetaPhi[1]))}
+    	{-(Pow2(alpha) + g_rr * Pow2(betar)), g_rr * betar, 0., 0.},
+    	{g_rr * betar, g_rr, 0., 0.},
+    	{0., 0., g_T * r * r, 0.},
+    	{0., 0., 0., g_T * Pow2(r * sin_theta)}
     };
 
     float4x4 g_Cartesian = 
     {
-        {0, 0, 0, 0},
-        {0, 0, 0, 0},
-        {0, 0, 0, 0},
-        {0, 0, 0, 0}
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.}
     };
-
-    float4x4 g_flat = 
+    float4x4 g_tmp = 
     {
-        {-1, 0, 0, 0},
-        {0, 1, 0, 0},
-        {0, 0, 1, 0},
-        {0, 0, 0, 1}
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.}
     };
-    return g_flat; 
 
-    float4x4 J = Jacobian(x_spherical);
+    float4x4 J = {
+        {1., 0., 0., 0.},
+        {0.,  sin_theta * cos_phi, sin_theta * sin_phi, cos_theta},
+        {0., ir * cos_theta * cos_phi, ir * cos_theta * sin_phi, - ir * sin_theta},
+        {0., - ir * csc_theta * sin_phi, ir * csc_theta * cos_phi, 0.}
+    };
     
     [unroll]
-    for(int a = 0; a < 4; a++)
+    for(a = 0; a < 4; a++)
     {
         [unroll]
-        for(int b = 0; b < 4; b++)
+        for(d = 0; d < 4; d++)
         {
-            
-
             [unroll]
-            for(int c = 0; c < 4; c++)
+            for(c = 0; c < 4; c++)
             {
-                [unroll]
-                for(int d = 0; d < 4; d++)
-                {
-                    g_Cartesian[a][b] += g_Spherical[c][d] * J[c][a] * J[d][b];
-                }
+            	g_tmp[a][d] += g_Spherical[c][d] * J[c][a];
+            }
+        }
+    }
+    [unroll]
+    for(a = 0; a < 4; a++)
+    {
+        [unroll]
+        for(b = 0; b < 4; b++)
+        {
+            [unroll]
+            for(d = 0; d < 4; d++)
+            {
+            	g_Cartesian[a][b] += g_tmp[a][d] * J[d][b];
             }
         }
     }
@@ -223,101 +232,131 @@ float4x4 Metric(float4 x)
     return g_Cartesian;
 }
 
-    float4x4 InverseMetric(float4 x)
+float4x4 InverseMetric(float4 x)
+{
+    /*
+    float4x4 g_flat = 
     {
-        float3 xyz;
-        xyz[0] = x[1];
-        xyz[1] = x[2];
-        xyz[2] = x[3];
-        float3 rThetaPhi = CartesianToSpherical(xyz);
-        float4 x_spherical;
-        x_spherical[0] = x[0];
-        x_spherical[1] = rThetaPhi[0];
-        x_spherical[2] = rThetaPhi[1];
-        x_spherical[3] = rThetaPhi[2];
-        float r = rThetaPhi[0];
-        float theta = rThetaPhi[1];
+        {-1., 0., 0., 0.},
+        {0., 1., 0., 0.},
+        {0., 0., 1., 0.},
+        {0., 0., 0., 1.}
+    };
+    return g_flat;*/
 
-        float alpha = Lapse(x[0], rThetaPhi[0]);
-        float betar = Betar(x[0], rThetaPhi[0]);
-        float g_rr = gammarr(x[0], rThetaPhi[0]);
-        float g_T = gammaT(x[0], rThetaPhi[0]);
+    int a, b, c, d;
 
-        float4x4 g_Spherical =
-        {
-        {-1 / Pow2(alpha), betar / (Pow2(alpha)), 0, 0},
-        {betar / Pow2(alpha), (1 / (g_rr)) - Pow2(betar/alpha), 0, 0},
-        {0, 0, 1 / (g_T * r * r), 0},
-        {0, 0, 0, 1 / (g_T * Pow2(r * sin(theta)))}
-        };
+    float r = max(1e-6,sqrt(x[1]*x[1] + x[2]*x[2] + x[3]*x[3]));
+    float theta = max(1e-6, min(PI - 1e-6, acos(x[3]/r)));
+    float phi;
+    if (x[2] == x[1] && x[1] == 0) {
+    	phi = 0.0;
+    }
+    else {
+	phi = atan2(x[2], x[1]);
+    }
+    float cos_theta = cos(theta);
+    float sin_theta = sin(theta);
+    float cos_phi = cos(phi);
+    float sin_phi = sin(phi);
 
-        float4x4 g_Cartesian = 
-        {
-        {0, 0, 0, 0},
-        {0, 0, 0, 0},
-        {0, 0, 0, 0},
-        {0, 0, 0, 0}
-        };
+    float alpha = Lapse(x[0], r);
+    float betar = Betar(x[0], r);
+    float g_rr = gammarr(x[0], r);
+    float g_T = gammaT(x[0], r);
 
-        float4x4 g_flat = 
-        {
-            {-1, 0, 0, 0},
-            {0, 1, 0, 0},
-            {0, 0, 1, 0},
-            {0, 0, 0, 1}
-        };
-        //return g_flat; 
-        float4x4 J_inv = InverseJacobian(x_spherical);
-        
+    float4x4 g_Spherical =
+    {
+    	{-1. / Pow2(alpha), betar / (Pow2(alpha)), 0., 0.},
+        {betar / Pow2(alpha), (1. / (g_rr)) - Pow2(betar/alpha), 0., 0.},
+  	{0., 0., 1. / (g_T * r * r), 0.},
+    	{0., 0., 0., 1. / (g_T * Pow2(r * sin_theta))},
+    };
+
+    float4x4 g_Cartesian = 
+    {
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.}
+    };
+    float4x4 g_tmp = 
+    {
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.}
+    };
+
+    float4x4 J_inv =
+    {
+        {1., 0., 0., 0.},
+        {0., sin_theta * cos_phi, r * cos_theta * cos_phi, - r * sin_theta * sin_phi},
+        {0., sin_theta * sin_phi, r * cos_theta * sin_phi, r * sin_theta * cos_phi},
+        {0., cos_theta, - r * sin_theta, 0.}
+    };
+
+    [unroll]
+    for(a = 0; a < 4; a++)
+    {
         [unroll]
-        for(int a = 0; a < 4; a++)
+        for(d = 0; d < 4; d++)
         {
             [unroll]
-            for(int b = 0; b < 4; b++)
+            for(c = 0; c < 4; c++)
             {
-                g_Cartesian[a][b] = 0;
-                [unroll]
-                for(int c = 0; c < 4; c++)
-                {
-                    [unroll]
-                    for(int d = 0; d < 4; d++)
-                    {
-                        g_Cartesian[a][b] += g_Spherical[c][d] * J_inv[c][a] * J_inv[d][b];
-                    }
-                }
+                g_tmp[a][d] += g_Spherical[c][d] * J_inv[a][c];
             }
         }
-        return g_Cartesian;
     }
     
-    float4x4 Derivative(float4 x, int a)
+    [unroll]
+    for(a = 0; a < 4; a++)
     {
-        float h = 0.01;
-        float4 deltaPlus_x = x;
-       
-        deltaPlus_x[a] += h;
-        float4x4 gPlus = Metric(deltaPlus_x);
-        
-        float4 deltaMinus_x = x;
-        deltaMinus_x[a] -= h;
-        float4x4 gMinus = Metric(deltaMinus_x);
-
-        float4x4 dg;
         [unroll]
-        for(int b = 0; b < 4; b++)
+        for(b = 0; b < 4; b++)
         {
             [unroll]
-            for(int c = 0; c < 4; c++)
+            for(d = 0; d < 4; d++)
             {
-                dg[b][c] = (gPlus[b][c] - gMinus[b][c]) / (2 * h);
+                g_Cartesian[a][b] += g_tmp[a][d] * J_inv[b][d];
             }
         }
-        
-        return dg;
     }
+    
+    return g_Cartesian;
+}
+    
+float4x4 Derivative(float4 x, int a)
+{
+    float h = 0.01;
+    float4 deltaPlus_x = x;
+   
+    deltaPlus_x[a] += h;
+    float4x4 gPlus = Metric(deltaPlus_x);
+    
+    float4 deltaMinus_x = x;
+    deltaMinus_x[a] -= h;
+    float4x4 gMinus = Metric(deltaMinus_x);
 
-    bool ShootRay(inout float dt, float tol, inout float4 x_u, inout float4 u_u)
-    { 
+    float4x4 dg;
+    [unroll]
+    for(int b = 0; b < 4; b++)
+    {
+        [unroll]
+        for(int c = 0; c < 4; c++)
+        {
+            dg[b][c] = (gPlus[b][c] - gMinus[b][c]) / (2 * h);
+        }
+    }
+    
+    return dg;
+}
+
+bool ShootRay(inout float dt, float tol, inout float4 x_u, inout float4 u_u)
+{
+    int a, b, c;
+    
     float4 rhs_x_u;
     float4 rhs_u_u;
     float4 rhs_u_d;
@@ -335,46 +374,32 @@ float4x4 Metric(float4 x)
     float4x4 g_dd = Metric(x_u);
 
     bool isGood = false;
-
     float error;
-
     float dt_min = 1e-10;
 
     [unroll]
-    for(int a = 0; a < 4; a++)
+    for(a = 0; a < 4; a++)
     {
         u_d[a] = 0.0;
         [unroll]
-        for(int b = 0; b < 4; b++)
+        for(b = 0; b < 4; b++)
         {
             u_d[a] += g_dd[a][b] * u_u[b];
         }
     }
 
     [unroll]
-    for(int a = 0; a < 4; a++)
+    for(a = 0; a < 4; a++)
     {
         rhs_x_u[a] = -u_u[a];
-        
         rhs_u_d[a] = 0.0;
-
-        // [unroll]
-        // for(int i = 0; i < 4; i++)
-        // {
-        //     [unroll]
-        //     for(int j = 0; j < 4; j++)
-        //     {
-        //         dg_dd[i][j] = Derivative(x_u, a)[i][j];
-        //     }
-        // }
-
+        
         float4x4 dg_dd = Derivative(x_u, a); 
-
         [unroll]
-        for(int b = 0; b < 4; b++)
+        for(b = 0; b < 4; b++)
         {
             [unroll]
-            for(int c = 0; c < 4; c++)
+            for(c = 0; c < 4; c++)
             {
                 rhs_u_d[a] -= ((0.5) * dg_dd[b][c] * u_u[b] * u_u[c]);
             }
@@ -382,44 +407,43 @@ float4x4 Metric(float4 x)
     }
 
     [unroll]
-    for(int a = 0; a < 4; a++)
+    for(a = 0; a < 4; a++)
     {
         x_u_star[a] = x_u[a] + (0.5)*dt*rhs_x_u[a];
         u_d_star[a] = u_d[a] + (0.5)*dt*rhs_u_d[a];
     }
 
     float4x4 g_uu = InverseMetric(x_u_star);
-
     [unroll]
-    for(int a = 0; a < 4; a++)
+    for(a = 0; a < 4; a++)
     {
         u_u_star[a] = 0.0;
         
         [unroll]
-        for(int b = 0; b < 4; b++)
+        for(b = 0; b < 4; b++)
         {
             u_u_star[a] += g_uu[a][b] * u_d_star[b];
         }
     }
 
     [unroll]
-    for(int a = 0; a < 4; a++)
+    for(a = 0; a < 4; a++)
     {
         x_u_euler[a] = x_u[a] + dt*rhs_x_u[a];
         u_d_euler[a] = u_d[a] + dt*rhs_u_d[a];
     }
 
     [unroll]
-    for(int a = 0; a < 4; a++)
+    for(a = 0; a < 4; a++)
     {
         rhs_x_u[a] = -u_u_star[a];
-        //rhs_u_d[a] = 0.0;
+        
         float4x4 dg_dd = Derivative(x_u_star, a); 
         [unroll]
-        for(int b = 0; b < 4; b++)
+        for(b = 0; b < 4; b++)
         {
             [unroll]
-            for(int c = 0; c < 4; c++)
+            for(c = 0; c < 4; c++)
             {
                 rhs_u_d[a] -= (0.5) * (dg_dd[b][c] * u_u_star[b] * u_u_star[c]);
             }
@@ -427,7 +451,7 @@ float4x4 Metric(float4 x)
     }
 
     [unroll]
-    for(int a = 0; a < 4; a++)
+    for(a = 0; a < 4; a++)
     {
         x_u_star[a] = x_u[a] + dt*rhs_x_u[a];
         u_d_star[a] = u_d[a] + dt*rhs_u_d[a];
@@ -435,33 +459,32 @@ float4x4 Metric(float4 x)
 
     error = 0.0;
     [unroll]
-    for(int i = 1; i < 4; i++)
+    for(a = 1; a < 4; a++)
     {
-        error += abs(x_u_star[i] - x_u_euler[i]);
+        error += abs(x_u_star[a] - x_u_euler[a]);
     }
 
     if(error < tol || dt <= dt_min)
     {
         isGood = true;
         [unroll]
-        for(int i = 0; i < 4; i++){
-            x_u[i] = x_u_star[i];
+        for(a = 0; a < 4; a++){
+            x_u[a] = x_u_star[a];
         }
 
-        g_uu = InverseMetric(x_u);
-
         [unroll]
-        for(int a = 0; a < 4; a++){ 
+        for(a = 0; a < 4; a++){ 
             u_d[a] = u_d_star[a];
         }
 
+        g_uu = InverseMetric(x_u);
         [unroll]
-        for(int a = 0; a < 4; a++)
+        for(a = 0; a < 4; a++)
         {
             u_u[a] = 0.0;
 
             [unroll]
-            for(int b = 0; b < 4; b++)
+            for(b = 0; b < 4; b++)
             {
                 u_u[a] += g_uu[a][b] * u_d[a];
             }
@@ -510,7 +533,6 @@ float DiskNoise(float4 x)
     // float intensity = sin((PI * rad) / diskRadius);
     // return Random((x[1], x[3])) * intensity;
     return abs(sin(PI * rad / diskRadius)* (0.01 + sin((PI * rad * 7.0) / diskRadius)));
-    
 }
 
 [numthreads(8,8,1)]
@@ -519,7 +541,6 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     // Break if already failed bounds check
     if (isComplete[id.xy] == 1) { return; }
     float4 x = Position[id.xy].xyzw;
-    //float t = Position[id.xy].x;
     float3 camPos = x.yzw;
     float4 u = Direction[id.xy].xyzw;
     float dt = TimeStep[id.xy].x;
@@ -531,10 +552,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     TimeStep[id.xy] = dt;
     if(isGood)
     {
-        //t += dt;
         Position[id.xy]  = x;
         Direction[id.xy] = u;
-
     }
     else
     {
@@ -542,12 +561,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     }
 
     float dist = sqrt((x[1]*x[1]) + (x[2]*x[2]) + (x[3]*x[3]));
-
-    bool hitDisk = diskHit(x, dist);
-
-    float noise = DiskNoise(x);
-
-    
+    //bool hitDisk = diskHit(x, dist);
+    //float noise = DiskNoise(x);
 
     if((dist < 1.01 * horizonRadius))
     {
@@ -558,22 +573,17 @@ void CSMain (uint3 id : SV_DispatchThreadID)
         isComplete[id.xy] = 1;
     }
 
-    if(hitDisk)
-    {
-        Color[id.xy] = Blend(Color[id.xy], noise * float4(0.2, 0.02, 0.0, 0.1));
-       
-    } 
+    //if(hitDisk)
+    //{
+    //    Color[id.xy] = Blend(Color[id.xy], noise * float4(0.2, 0.02, 0.0, 0.1));
+    //} 
 
     if(dist > 1000.0)
     {
         float4 skyboxColor = float4(SampleBackground(x, camPos), 1.0);
         // Blend with previous color value
         Color[id.xy] = Blend(Color[id.xy], skyboxColor);
-
         // Set complete flag
         isComplete[id.xy] = 1;
     }
-    
-
-
 }
