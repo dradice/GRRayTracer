@@ -91,53 +91,6 @@ float gammaT(float t, float r)
     return Pow4(1 + (rho_s / r));
 }
 
-float4x4 Jacobian(float r, float sin_theta, float cos_theta, float sin_phi, float cos_phi)
-{
-    float ir        = 1.0/r;
-    float csc_theta = 1.0/sin_theta;
-
-    float4x4 J =
-    {
-        {1., 0., 0., 0.},
-        {0.,  sin_theta * cos_phi, sin_theta * sin_phi, cos_theta},
-        {0., ir * cos_theta * cos_phi, ir * cos_theta * sin_phi, - ir * sin_theta},
-        {0., - ir * csc_theta * sin_phi, ir * csc_theta * cos_phi, 0.}
-    };
-
-    return J;
-}
-
-float4x4 InverseJacobian(float r, float sin_theta, float cos_theta, float sin_phi, float cos_phi)
-{
-     float4x4 J_inv =
-    {
-        {1., 0., 0., 0.},
-        {0., sin_theta * cos_phi, r * cos_theta * cos_phi, - r * sin_theta * sin_phi},
-        {0., sin_theta * sin_phi, r * cos_theta * sin_phi, r * sin_theta * cos_phi},
-        {0., cos_theta, - r * sin_theta, 0.}
-    };
-
-    return J_inv;
-}
-
-/*
-void CartesianToSpherical(float3 xyz, out float r,
-	out float sin_theta, out float cos_theta,
-	out float sin_phi, out float cos_phi)
-{
-    r = max(1e-6,sqrt(xyz[0]*xyz[0] + xyz[1]*xyz[1] + xyz[2]*xyz[2]));
-    cos_theta = xyz[2]/r;
-    sin_theta = max(1e-6, sqrt(1. - cos_theta*cos_theta));
-    cos_phi = xyz[0]/(r*sin_theta);
-    sin_phi = xyz[1]/(r*sin_theta);
-}
-
-float3 SphericalToCartesian(float3 rThetaPhi)
-{
-
-}
-*/
-
 float4x4 Metric(float4 x)
 {
     /*float4x4 g_flat = 
@@ -151,15 +104,9 @@ float4x4 Metric(float4 x)
     
     int a, b, c, d;
 
-    float r = max(1e-6,sqrt(x[1]*x[1] + x[2]*x[2] + x[3]*x[3]));
-    float theta = max(1e-6, min(PI - 1e-6, acos(x[3]/r)));
-    float phi;
-    if (x[2] == x[1] && x[1] == 0) {
-    	phi = 0.0;
-    }
-    else {
-	phi = atan2(x[2], x[1]);
-    }
+    float r         = max(1e-6,sqrt(x[1]*x[1] + x[2]*x[2] + x[3]*x[3]));
+    float theta     = max(1e-6, min(PI - 1e-6, acos(x[3]/r)));
+    float phi       = atan2(x[2], x[1]);
     float cos_theta = cos(theta);
     float sin_theta = sin(theta);
     float cos_phi   = cos(phi);
@@ -246,19 +193,13 @@ float4x4 InverseMetric(float4 x)
 
     int a, b, c, d;
 
-    float r = max(1e-6,sqrt(x[1]*x[1] + x[2]*x[2] + x[3]*x[3]));
-    float theta = max(1e-6, min(PI - 1e-6, acos(x[3]/r)));
-    float phi;
-    if (x[2] == x[1] && x[1] == 0) {
-    	phi = 0.0;
-    }
-    else {
-	phi = atan2(x[2], x[1]);
-    }
+    float r         = max(1e-6,sqrt(x[1]*x[1] + x[2]*x[2] + x[3]*x[3]));
+    float theta     = max(1e-6, min(PI - 1e-6, acos(x[3]/r)));
+    float phi       = atan2(x[2], x[1]);
     float cos_theta = cos(theta);
     float sin_theta = sin(theta);
-    float cos_phi = cos(phi);
-    float sin_phi = sin(phi);
+    float cos_phi   = cos(phi);
+    float sin_phi   = sin(phi);
 
     float alpha = Lapse(x[0], r);
     float betar = Betar(x[0], r);

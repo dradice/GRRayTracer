@@ -19,171 +19,270 @@ float timeStep;
 float errorTolerance;
 float horizonRadius;
 
+// Constants
+static const float PI = 3.14159265f;
+
 //light ray data
 float4 derivatives = {0.0f, 0.0f, 0.0f, 0.0f};
 
 float Dot(float4x4 g, float4 v1, float4 v2)
-    {
-        float dot = 0;
+{
+    float dot = 0;
 
-        [unroll]
-        for(int a = 0; a < 4; a++)
+    [unroll]
+    for(int a = 0; a < 4; a++)
+    {
+        for(int b = 0; b < 4; b++)
         {
-            for(int b = 0; b < 4; b++)
-            {
-                dot += g[a][b] * v1[a] * v2[b];
-            }
+            dot += g[a][b] * v1[a] * v2[b];
         }
-     
-        return dot;
     }
+ 
+    return dot;
+}
 
-    float4 vAdd(float4 v1, float4 v2)
+float4 vAdd(float4 v1, float4 v2)
+{
+    float4 added;
+    added[0] = v1[0] + v2[0];
+    added[1] = v1[1] + v2[1];
+    added[2] = v1[2] + v2[2];
+    added[3] = v1[3] + v2[3];
+
+    return added;
+}
+
+float4 vScale(float s, float4 v)
+{
+    //float4 scaled = (s * v[0], s * v[1], s * v[2], s * v[3]);
+    float4 scaled;
+    scaled[0] = v[0] * s;
+    scaled[1] = v[1] * s;
+    scaled[2] = v[2] * s;
+    scaled[3] = v[3] * s;
+    return scaled;
+}
+
+float4 vNormalize(float4x4 g, float4 v)
+{
+    float norm = sqrt(abs(Dot(g, v, v)));
+
+    return vScale(1 / norm, v);
+}
+
+float Pow2(float input)
+{
+    return input * input;
+}
+
+float Pow4(float input)
+{
+    return input * input * input * input;
+}
+
+float Lapse(float t, float r)
+{
+    //return 1;
+    float rho_s = horizonRadius;
+    return ((1 - rho_s / r) / (1 + rho_s / r));
+}
+
+float Betar(float t, float r)
+{
+    return 0;
+}
+
+float gammarr(float t, float r)
+{
+    //return 1;
+    float rho_s = horizonRadius;
+    return Pow4(1 + (rho_s / r));
+}
+
+float gammaT(float t, float r)
+{
+    //return 1;
+    float rho_s = horizonRadius;
+    return Pow4(1 + (rho_s / r));
+}
+
+float4x4 Metric(float4 x)
+{
+    /*float4x4 g_flat = 
     {
-        float4 added;
-        added[0] = v1[0] + v2[0];
-        added[1] = v1[1] + v2[1];
-        added[2] = v1[2] + v2[2];
-        added[3] = v1[3] + v2[3];
+        {-1., 0., 0., 0.},
+        {0., 1., 0., 0.},
+        {0., 0., 1., 0.},
+        {0., 0., 0., 1.}
+    };
+    return g_flat;*/
+    
+    int a, b, c, d;
 
-        return added;
-    }
+    float r         = max(1e-6,sqrt(x[1]*x[1] + x[2]*x[2] + x[3]*x[3]));
+    float theta     = max(1e-6, min(PI - 1e-6, acos(x[3]/r)));
+    float phi       = atan2(x[2], x[1]);
+    float cos_theta = cos(theta);
+    float sin_theta = sin(theta);
+    float cos_phi   = cos(phi);
+    float sin_phi   = sin(phi);
+    float ir        = 1.0/r;
+    float csc_theta = 1.0/sin_theta;
+    
+    float alpha = Lapse(x[0], r);
+    float betar = Betar(x[0], r);
+    float g_rr = gammarr(x[0], r);
+    float g_T = gammaT(x[0], r);
 
-    float4 vScale(float s, float4 v)
+    float4x4 g_Spherical =
     {
-        //float4 scaled = (s * v[0], s * v[1], s * v[2], s * v[3]);
-        float4 scaled;
-        scaled[0] = v[0] * s;
-        scaled[1] = v[1] * s;
-        scaled[2] = v[2] * s;
-        scaled[3] = v[3] * s;
-        return scaled;
-    }
+    	{-(Pow2(alpha) + g_rr * Pow2(betar)), g_rr * betar, 0., 0.},
+    	{g_rr * betar, g_rr, 0., 0.},
+    	{0., 0., g_T * r * r, 0.},
+    	{0., 0., 0., g_T * Pow2(r * sin_theta)}
+    };
 
-    float4 vNormalize(float4x4 g, float4 v)
+    float4x4 g_Cartesian = 
     {
-        float norm = sqrt(abs(Dot(g, v, v)));
-
-        return vScale(1 / norm, v);
-    }
-
-    float Pow4(float input)
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.}
+    };
+    float4x4 g_tmp = 
     {
-        return input * input * input * input;
-    }
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.}
+    };
 
-    float4x4 Metric(float4 x)
+    float4x4 J = {
+        {1., 0., 0., 0.},
+        {0.,  sin_theta * cos_phi, sin_theta * sin_phi, cos_theta},
+        {0., ir * cos_theta * cos_phi, ir * cos_theta * sin_phi, - ir * sin_theta},
+        {0., - ir * csc_theta * sin_phi, ir * csc_theta * cos_phi, 0.}
+    };
+    
+    [unroll]
+    for(a = 0; a < 4; a++)
     {
-        float rho = sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3]));
-        float rho_s = horizonRadius;
-        float4x4 g;
         [unroll]
-        for (int a = 0; a < 4; a++)
+        for(d = 0; d < 4; d++)
         {
             [unroll]
-            for (int b = 0; b < 4; b++)
+            for(c = 0; c < 4; c++)
             {
-                g[a][b] = 0.0;
+            	g_tmp[a][d] += g_Spherical[c][d] * J[c][a];
             }
         }
-        g[0][0] = -(1 - rho_s / rho) / (1 + rho_s / rho) * (1 - rho_s / rho) / (1 + rho_s / rho);
-        g[1][1] = Pow4((1 + rho_s / rho));
-        g[2][2] = g[1][1];
-        g[3][3] = g[1][1];
-
-        return g;
     }
-
-    float4x4 CameraTetrad(float4 x)
+    [unroll]
+    for(a = 0; a < 4; a++)
     {
-        float4x4 tetrad;
-        int a;
-
-        // float4 ep_x = (0.0, 1.0, 0.0, 0.0);
-        // float4 ep_y = (0.0, 0.0, 1.0, 0.0);
-        // float4 ep_z = (0.0, 0.0, 0.0, 1.0);
-
-        // float4 ep_0 = (1.0, 0.0, 0.0, 0.0);
-
-        float4 ep_x;
-        float4 ep_y;
-        float4 ep_z;
-        float4 ep_0;
-
-        ep_x[0] = 0.0;
-        ep_x[1] = 1.0;
-        ep_x[2] = 0.0;
-        ep_x[3] = 0.0;
-
-        ep_y[0] = 0.0;
-        ep_y[1] = 0.0;
-        ep_y[2] = 1.0;
-        ep_y[3] = 0.0;
-
-        ep_z[0] = 0.0;
-        ep_z[1] = 0.0;
-        ep_z[2] = 0.0;
-        ep_z[3] = 1.0;
-
-        ep_0[0] = _Momentum[0];
-        ep_0[1] = _Momentum[1]; //replace Momentum with FourVelocity
-        ep_0[2] = _Momentum[2];
-        ep_0[3] = _Momentum[3];
-
-        float4x4 g = Metric(x);
-
-        float4 e_0 = vNormalize(g, ep_0);
-
-        float dot1_0 = Dot(g, e_0, ep_x);
         [unroll]
-        for(a = 0; a < 4; a++)
+        for(b = 0; b < 4; b++)
         {
-            ep_x[a] += dot1_0 * e_0[a];
+            [unroll]
+            for(d = 0; d < 4; d++)
+            {
+            	g_Cartesian[a][b] += g_tmp[a][d] * J[d][b];
+            }
         }
-        float4 e_1 = vNormalize(g, ep_x);
-
-        float dot2_0 = Dot(g, e_0, ep_y);
-        float dot2_1 = Dot(g, e_1, ep_y);
-        [unroll]
-        for(a = 0; a < 4; a++)
-        {
-            ep_y[a] += dot2_0 * e_0[a] - dot2_1 * e_1[a];
-        }
-        float4 e_2 = vNormalize(g, ep_y);
-
-        float dot3_0 = Dot(g, e_0, ep_z);
-        float dot3_1 = Dot(g, e_1, ep_z);
-        float dot3_2 = Dot(g, e_2, ep_z);
-        [unroll]
-        for(a = 0; a < 4; a++)
-        {
-            ep_z[a] += dot3_0 * e_0[a] - dot3_1 * e_1[a] - dot3_2 * e_2[a];
-        }
-        float4 e_3 = vNormalize(g, ep_z);
-
-        tetrad[0] = e_0;
-        tetrad[1] = e_1;
-        tetrad[2] = e_2;
-        tetrad[3] = e_3;
-
-        return tetrad;
     }
+    
+    return g_Cartesian;
+}
 
+float4x4 CameraTetrad(float4 x)
+{
+    float4x4 tetrad;
+    int a;
 
-     float4 tetradDirection(float4 x, float3 omega)
-     {
-        float4 k;
+    // float4 ep_x = (0.0, 1.0, 0.0, 0.0);
+    // float4 ep_y = (0.0, 0.0, 1.0, 0.0);
+    // float4 ep_z = (0.0, 0.0, 0.0, 1.0);
 
-        float4x4 e = CameraTetrad(x);
+    // float4 ep_0 = (1.0, 0.0, 0.0, 0.0);
 
-        k[0] = (e[0][0] - omega[0] * e[1][0] - omega[1] * e[2][0] - e[3][0] * omega[2]);
-        k[1] = (e[0][1] - omega[0] * e[1][1] - omega[1] * e[2][1] - e[3][1] * omega[2]);
-        k[2] = (e[0][2] - omega[0] * e[1][2] - omega[1] * e[2][2] - e[3][2] * omega[2]);
-        k[3] = (e[0][3] - omega[0] * e[1][3] - omega[1] * e[2][3] - e[3][3] * omega[2]);
+    float4 ep_x;
+    float4 ep_y;
+    float4 ep_z;
+    float4 ep_0;
 
-        //return float4(0.0, k[1], k[2], k[3]);
-        return k;
-     }
+    ep_x[0] = 0.0;
+    ep_x[1] = 1.0;
+    ep_x[2] = 0.0;
+    ep_x[3] = 0.0;
+
+    ep_y[0] = 0.0;
+    ep_y[1] = 0.0;
+    ep_y[2] = 1.0;
+    ep_y[3] = 0.0;
+
+    ep_z[0] = 0.0;
+    ep_z[1] = 0.0;
+    ep_z[2] = 0.0;
+    ep_z[3] = 1.0;
+
+    ep_0[0] = _Momentum[0];
+    ep_0[1] = _Momentum[1]; //replace Momentum with FourVelocity
+    ep_0[2] = _Momentum[2];
+    ep_0[3] = _Momentum[3];
+
+    float4x4 g = Metric(x);
+
+    float4 e_0 = vNormalize(g, ep_0);
+
+    float dot1_0 = Dot(g, e_0, ep_x);
+    [unroll]
+    for(a = 0; a < 4; a++)
+    {
+        ep_x[a] += dot1_0 * e_0[a];
+    }
+    float4 e_1 = vNormalize(g, ep_x);
+
+    float dot2_0 = Dot(g, e_0, ep_y);
+    float dot2_1 = Dot(g, e_1, ep_y);
+    [unroll]
+    for(a = 0; a < 4; a++)
+    {
+        ep_y[a] += dot2_0 * e_0[a] - dot2_1 * e_1[a];
+    }
+    float4 e_2 = vNormalize(g, ep_y);
+
+    float dot3_0 = Dot(g, e_0, ep_z);
+    float dot3_1 = Dot(g, e_1, ep_z);
+    float dot3_2 = Dot(g, e_2, ep_z);
+    [unroll]
+    for(a = 0; a < 4; a++)
+    {
+        ep_z[a] += dot3_0 * e_0[a] - dot3_1 * e_1[a] - dot3_2 * e_2[a];
+    }
+    float4 e_3 = vNormalize(g, ep_z);
+
+    tetrad[0] = e_0;
+    tetrad[1] = e_1;
+    tetrad[2] = e_2;
+    tetrad[3] = e_3;
+
+    return tetrad;
+}
+
+float4 tetradDirection(float4 x, float3 omega)
+{
+   float4 k;
+
+   float4x4 e = CameraTetrad(x);
+
+   k[0] = (e[0][0] - omega[0] * e[1][0] - omega[1] * e[2][0] - e[3][0] * omega[2]);
+   k[1] = (e[0][1] - omega[0] * e[1][1] - omega[1] * e[2][1] - e[3][1] * omega[2]);
+   k[2] = (e[0][2] - omega[0] * e[1][2] - omega[1] * e[2][2] - e[3][2] * omega[2]);
+   k[3] = (e[0][3] - omega[0] * e[1][3] - omega[1] * e[2][3] - e[3][3] * omega[2]);
+
+   //return float4(0.0, k[1], k[2], k[3]);
+   return k;
+}
 
 [numthreads(8,8,1)]
 void CSMain (uint3 id : SV_DispatchThreadID)
