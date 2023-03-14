@@ -193,7 +193,7 @@ MonoBehaviour:
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
-  overSample: 4
+  overSample: 1
   maxSoftPasses: 1000
   maxPasses: 1500
   subfolder: 
@@ -329,7 +329,7 @@ MonoBehaviour:
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
-  overSample: 4
+  overSample: 1
   maxSoftPasses: 1000
   maxPasses: 1500
   subfolder: 
@@ -465,7 +465,7 @@ MonoBehaviour:
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
-  overSample: 4
+  overSample: 1
   maxSoftPasses: 1000
   maxPasses: 1500
   subfolder: 
@@ -601,7 +601,7 @@ MonoBehaviour:
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
-  overSample: 4
+  overSample: 1
   maxSoftPasses: 1000
   maxPasses: 1500
   subfolder: 
@@ -935,7 +935,7 @@ MonoBehaviour:
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
-  overSample: 4
+  overSample: 1
   maxSoftPasses: 1000
   maxPasses: 15000
   subfolder: 
@@ -1107,7 +1107,7 @@ MonoBehaviour:
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
-  overSample: 4
+  overSample: 1
   maxSoftPasses: 1000
   maxPasses: 2000
   subfolder: 

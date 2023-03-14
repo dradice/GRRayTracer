@@ -134,7 +134,6 @@ public class RayTraceCameraBHVR : MonoBehaviour
         cameraVectorShader.SetFloat("errorTolerance", errorTolerance);
         cameraVectorShader.SetFloat("horizonRadius", horizonRadius);
 
-
         // Send render parameters to update shader
         rayUpdateShader.SetTexture(0, "_SkyboxTexture", skyboxTexture);
         rayUpdateShader.SetFloat("escapeDistance", escapeDistance);
@@ -155,10 +154,10 @@ public class RayTraceCameraBHVR : MonoBehaviour
         GameObject multiCam = GameObject.Find("360Cam");
         Freefall freefall = multiCam.GetComponent<Freefall>();
         float[] momentum = freefall.momentum;
-        _momentum[0] = momentum[0];
-        _momentum[1] = momentum[1];
-        _momentum[2] = momentum[2];
-        _momentum[3] = momentum[3];
+        _momentum[0] = 1.0f;
+        _momentum[1] = 0.0f;
+        _momentum[2] = 0.0f;
+        _momentum[3] = 0.0f;
 
         Debug.Log("running360");
         if (is360)
