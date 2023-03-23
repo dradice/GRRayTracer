@@ -5,6 +5,9 @@
 // Constants
 static const float PI = 3.14159265f;
 
+//Metric data
+#include "small_metric.cginc"
+
 // Output parameters
 RWTexture2D<float4> Position;
 RWTexture2D<float4> Direction;
@@ -65,28 +68,37 @@ float Pow4(float input)
     return input * input * input * input;
 }
 
-float Lapse(float t, float r)
+// float Interpolate(float r, float values[METRIC_SIZE])
+// {
+//     int i = (r - metric_rmin) / metric_dr;
+//     i = max(0, i);
+//     i = min((METRIC_SIZE -1), i);
+
+//     float lambda = (r - metric_rmin - (i * metric_dr)) / metric_dr;
+
+//     return values[i] * (1 - lambda) + (values[i + 1] * lambda);
+// }
+
+float Lapse(float r)
 {
-    //return 1;
+    // return Interpolate(r , metric_lapse);
     float rho_s = horizonRadius;
     return ((1 - rho_s / r) / (1 + rho_s / r));
 }
 
-float Betar(float t, float r)
+float Betar(float r)
 {
     return 0;
 }
 
-float gammarr(float t, float r)
+float Gammarr(float r)
 {
-    //return 1;
     float rho_s = horizonRadius;
     return Pow4(1 + (rho_s / r));
 }
 
-float gammaT(float t, float r)
+float GammaT(float r)
 {
-    //return 1;
     float rho_s = horizonRadius;
     return Pow4(1 + (rho_s / r));
 }
@@ -114,10 +126,10 @@ float4x4 Metric(float4 x)
     float ir        = 1.0/r;
     float csc_theta = 1.0/sin_theta;
     
-    float alpha = Lapse(x[0], r);
-    float betar = Betar(x[0], r);
-    float g_rr = gammarr(x[0], r);
-    float g_T = gammaT(x[0], r);
+    float alpha = Lapse(r);
+    float betar = Betar(r);
+    float g_rr = Gammarr(r);
+    float g_T = GammaT(r);
 
     float4x4 g_Spherical =
     {
@@ -201,10 +213,10 @@ float4x4 InverseMetric(float4 x)
     float cos_phi   = cos(phi);
     float sin_phi   = sin(phi);
 
-    float alpha = Lapse(x[0], r);
-    float betar = Betar(x[0], r);
-    float g_rr = gammarr(x[0], r);
-    float g_T = gammaT(x[0], r);
+    float alpha = Lapse(r);
+    float betar = Betar(r);
+    float g_rr = Gammarr(r);
+    float g_T = GammaT(r);
 
     float4x4 g_Spherical =
     {

@@ -6,6 +6,7 @@ using UnityEngine;
 public class RayTraceCameraBHVR : MonoBehaviour
 {
 #pragma shader_feature STEREO_CUBEMAP_RENDER
+
     [Header("Shaders")]
     public ComputeShader cameraVectorShader;
     public ComputeShader rayUpdateShader;

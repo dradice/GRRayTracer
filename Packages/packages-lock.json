@@ -126,7 +126,7 @@
       }
     },
     "com.unity.xr.arsubsystems": {
-      "version": "4.1.10",
+      "version": "4.1.7",
       "depth": 1,
       "source": "registry",
       "dependencies": {
@@ -144,7 +144,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.xr.legacyinputhelpers": {
-      "version": "2.1.10",
+      "version": "2.1.7",
       "depth": 1,
       "source": "registry",
       "dependencies": {
