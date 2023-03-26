@@ -6,7 +6,7 @@
 static const float PI = 3.14159265f;
 
 //Metric data
-#include "small_metric.cginc"
+#include "metric.cginc"
 
 // Output parameters
 RWTexture2D<float4> Position;

@@ -1,14 +1,22 @@
-#ifndef METRIC_CG_INCLUDE
-// Upgrade NOTE: excluded shader from DX11, OpenGL ES 2.0 because it uses unsized arrays
-#pragma exclude_renderers d3d11 gles
-#define METRIC_CG_INCLUDE
-#define METRIC_SIZE 2000
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy
 
-float metric_rmin = 5.000000e-03;
-float metric_dr = 1.000000e-02;
+rho_s = 0.5
+dist = numpy.linspace(1.054134189619000e-03, 20.0, num = 2000)
+mathematicalLapse = numpy.zeros(2000)
+mathematicalBetar = numpy.zeros(2000)
+mathematicalGammarr = numpy.zeros(2000)
+mathematicalGammaT = numpy.zeros(2000)
 
-static const float metric_lapse[2000] = {
-    1.054134189619000e-03,
+for i in range(0, 2000):
+    r = dist[i]
+    mathematicalLapse[i] = ((1 - rho_s / r) / (1 + rho_s / r))
+    mathematicalBetar[i] = 0
+    mathematicalGammarr[i] = (1 + (rho_s / r)) ** 4
+    mathematicalGammaT[i] = (1 + (rho_s / r)) ** 4
+
+punctureLapse = [1.054134189619000e-03,
     2.473179182011000e-03,
     4.705940597051000e-03,
     7.093178173488000e-03,
@@ -2007,10 +2015,9 @@ static const float metric_lapse[2000] = {
     8.646198421389000e-01,
     8.646467385045000e-01,
     8.646736070116000e-01,
-    8.647004477035000e-01,
-};
+    8.647004477035000e-01]
 
-static const float metric_betar[2000] = {
+punctureBetar = [
     2.438768707264000e-03,
     7.277997421450000e-03,
     1.207111390038000e-02,
@@ -4010,10 +4017,9 @@ static const float metric_betar[2000] = {
     5.413013194378000e-03,
     5.407788047906000e-03,
     5.402570089180000e-03,
-    5.397359303429000e-03,
-};
+    5.397359303429000e-03]
 
-static const float metric_grr[2000] = {
+punctureGammarr = [
     1.000000000000000e+06,
     1.000000000000000e+06,
     1.944810000000000e+05,
@@ -6013,10 +6019,9 @@ static const float metric_grr[2000] = {
     1.104001688969000e+00,
     1.103947676599000e+00,
     1.103893720262000e+00,
-    1.103839819869000e+00,
-};
+    1.103839819869000e+00]
 
-static const float metric_gT[2000] = {
+punctureGammaT = [
     1.000000000000000e+06,
     1.000000000000000e+06,
     1.944810000000000e+05,
@@ -8016,7 +8021,29 @@ static const float metric_gT[2000] = {
     1.104001688969000e+00,
     1.103947676599000e+00,
     1.103893720262000e+00,
-    1.103839819869000e+00,
-};
+    1.103839819869000e+00
+    ]
 
-#endif
+fig, axs = plt.subplots(2, 2)
+
+axs[0,0].plot(dist, punctureLapse, label = 'Puncture')
+axs[0,0].plot(dist, mathematicalLapse, label = 'Normal')
+axs[0,0].set_title('Lapse')
+
+axs[0,1].plot(dist, punctureBetar, label = 'Puncture')
+axs[0,1].plot(dist, mathematicalBetar, label = 'Normal')
+axs[0,1].set_title('Betar')
+
+axs[1,0].plot(dist, punctureGammarr, label = 'Puncture')
+axs[1,0].plot(dist, mathematicalGammarr, label = 'Normal')
+axs[1,0].set_title('Gammarr')
+
+axs[1,1].plot(dist, punctureGammaT, label = 'Puncture')
+axs[1,1].plot(dist, mathematicalGammaT, label = 'Normal')
+axs[1,1].set_title('GammaT')
+
+for ax in axs.flat:
+    ax.label_outer()
+    ax.legend(loc = 'best')
+
+plt.show()
