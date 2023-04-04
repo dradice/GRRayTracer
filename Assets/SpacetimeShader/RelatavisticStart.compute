@@ -17,7 +17,8 @@ float3 _CameraPositionCartesian;
 float4 _Momentum;
 float timeStep;
 float errorTolerance;
-float horizonRadius;
+
+#include "metric.cginc"
 
 // Constants
 static const float PI = 3.14159265f;
@@ -82,28 +83,51 @@ float Pow4(float input)
 
 float Lapse(float t, float r)
 {
-    //return 1;
-    float rho_s = horizonRadius;
-    return ((1 - rho_s / r) / (1 + rho_s / r));
+    int i = (r - metric_rmin)/metric_dr;
+    i = max(0, min(METRIC_SIZE - 2, i));
+    float lambda = (r - metric_rmin - (i * metric_dr)) / metric_dr;
+    lambda = max(0.0, min(1.0, lambda));
+    float v = metric_lapse[i]*(1 - lambda) + (metric_lapse[i+1]*lambda);
+    return v;
+    //float rho_s = 1.0;
+    //return ((1 - rho_s / r) / (1 + rho_s / r));
 }
 
 float Betar(float t, float r)
 {
+    //int i = (r - metric_rmin)/metric_dr;
+    //i = max(0, min(METRIC_SIZE - 2, i));
+    //float lambda = (r - metric_rmin - (i * metric_dr)) / metric_dr;
+    //lambda = max(0.0, min(1.0, lambda));
+    //float v = metric_betar[i]*(1 - lambda) + (metric_betar[i+1]*lambda);
+    //return v;
     return 0;
 }
 
 float gammarr(float t, float r)
 {
+    int i = (r - metric_rmin)/metric_dr;
+    i = max(0, min(METRIC_SIZE - 2, i));
+    float lambda = (r - metric_rmin - (i * metric_dr)) / metric_dr;
+    lambda = max(0.0, min(1.0, lambda));
+    float v = metric_grr[i]*(1 - lambda) + (metric_grr[i+1]*lambda);
+    return v;
     //return 1;
-    float rho_s = horizonRadius;
-    return Pow4(1 + (rho_s / r));
+    //float rho_s = 1.0;
+    //return Pow4(1 + (rho_s / r));
 }
 
 float gammaT(float t, float r)
 {
+    int i = (r - metric_rmin)/metric_dr;
+    i = max(0, min(METRIC_SIZE - 2, i));
+    float lambda = (r - metric_rmin - (i * metric_dr)) / metric_dr;
+    lambda = max(0.0, min(1.0, lambda));
+    float v = metric_gT[i]*(1 - lambda) + (metric_gT[i+1]*lambda);
+    return v;
     //return 1;
-    float rho_s = horizonRadius;
-    return Pow4(1 + (rho_s / r));
+    //float rho_s = 1.0;
+    //return Pow4(1 + (rho_s / r));
 }
 
 float4x4 Metric(float4 x)
@@ -309,7 +333,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //Direction[id.xy] = float4(0.0, -direction);
     Direction[id.xy] = tetradDirection(float4(0.0, _CameraPositionCartesian), direction);
     
-    Color[id.xy] = float4(0.0, 0.0, 0.0, 0.0);
+    Color[id.xy] = float4(1.0, 0.0, 0.0, 0.0);
     isComplete[id.xy] = 0;
     TimeStep[id.xy] = timeStep;
     ErrorTolerance[id.xy] = errorTolerance;

@@ -5,9 +5,6 @@
 // Constants
 static const float PI = 3.14159265f;
 
-//Metric data
-#include "small_metric.cginc"
-
 // Output parameters
 RWTexture2D<float4> Position;
 RWTexture2D<float4> Direction;
@@ -20,6 +17,8 @@ RWTexture2D<float> ErrorTolerance;
 // Input textures
 Texture2D<float4> _SkyboxTexture;
 
+#include "metric.cginc"
+
 // Step size parameters
 //float timeStep;
 
@@ -27,7 +26,6 @@ Texture2D<float4> _SkyboxTexture;
 SamplerState sampler_SkyboxTexture;
 
 // Physical parameters 
-float horizonRadius;
 float diskRadius;
 
 // Blend transparency and background colors
@@ -68,39 +66,65 @@ float Pow4(float input)
     return input * input * input * input;
 }
 
-// float Interpolate(float r, float values[METRIC_SIZE])
-// {
-//     int i = (r - metric_rmin) / metric_dr;
-//     i = max(0, i);
-//     i = min((METRIC_SIZE -1), i);
+/*
+float Interpolate(float r, float values[METRIC_SIZE])
+{
+    int i = (r - metric_rmin) / metric_dr;
+    i = max(0, i);
+    i = min((METRIC_SIZE -1), i);
 
-//     float lambda = (r - metric_rmin - (i * metric_dr)) / metric_dr;
+    float lambda = (r - metric_rmin - (i * metric_dr)) / metric_dr;
 
-//     return values[i] * (1 - lambda) + (values[i + 1] * lambda);
-// }
+    return values[i] * (1 - lambda) + (values[i + 1] * lambda);
+}
+*/
 
 float Lapse(float r)
 {
-    // return Interpolate(r , metric_lapse);
-    float rho_s = horizonRadius;
-    return ((1 - rho_s / r) / (1 + rho_s / r));
+    int i = (r - metric_rmin)/metric_dr;
+    i = max(0, min(METRIC_SIZE - 2, i));
+    //return metric_lapse[i];
+    float lambda = (r - metric_rmin - (i * metric_dr)) / metric_dr;
+    lambda = max(0.0, min(1.0, lambda));
+    float v = metric_lapse[i]*(1 - lambda) + (metric_lapse[i+1]*lambda);
+    return v;
+    //float rho_s = 1.0;
+    //return ((1 - rho_s / r) / (1 + rho_s / r));
 }
 
 float Betar(float r)
 {
+    //int i = (r - metric_rmin)/metric_dr;
+    //i = max(0, min(METRIC_SIZE - 2, i));
+    //float lambda = (r - metric_rmin - (i * metric_dr)) / metric_dr;
+    //lambda = max(0.0, min(1.0, lambda));
+    //float v = metric_betar[i]*(1 - lambda) + (metric_betar[i+1]*lambda);
+    //return v;
     return 0;
 }
 
 float Gammarr(float r)
 {
-    float rho_s = horizonRadius;
-    return Pow4(1 + (rho_s / r));
+    int i = (r - metric_rmin)/metric_dr;
+    i = max(0, min(METRIC_SIZE - 2, i));
+    float lambda = (r - metric_rmin - (i * metric_dr)) / metric_dr;
+    lambda = max(0.0, min(1.0, lambda));
+    float v = metric_grr[i]*(1 - lambda) + (metric_grr[i+1]*lambda);
+    return v;
+    //float rho_s = 1.0;
+    //return Pow4(1 + (rho_s / r));
 }
 
 float GammaT(float r)
 {
-    float rho_s = horizonRadius;
-    return Pow4(1 + (rho_s / r));
+    int i = (r - metric_rmin)/metric_dr;
+    i = max(0, min(METRIC_SIZE - 2, i));
+    float lambda = (r - metric_rmin - (i * metric_dr)) / metric_dr;
+    lambda = max(0.0, min(1.0, lambda));
+    float v = metric_gT[i]*(1 - lambda) + (metric_gT[i+1]*lambda);
+    return v;
+    //float rho_s = 1.0;
+    //return Pow4(1 + (rho_s / r));
 }
 
 float4x4 Metric(float4 x)
@@ -282,7 +306,7 @@ float4x4 InverseMetric(float4 x)
     
 float4x4 Derivative(float4 x, int a)
 {
-    float h = 0.01;
+    float h = 2*metric_dr;
     float4 deltaPlus_x = x;
    
     deltaPlus_x[a] += h;
@@ -417,6 +441,9 @@ bool ShootRay(inout float dt, float tol, inout float4 x_u, inout float4 u_u)
         error += abs(x_u_star[a] - x_u_euler[a]);
     }
 
+    float dist = sqrt(x_u_star[1]*x_u_star[1] + x_u_star[2]*x_u_star[2] + x_u_star[3]*x_u_star[3]);
+    error = error/max(1.0, dist);
+
     if(error < tol || dt <= dt_min)
     {
         isGood = true;
@@ -459,7 +486,7 @@ bool ShootRay(inout float dt, float tol, inout float4 x_u, inout float4 u_u)
 bool diskHit(float4 x, float dist)
 {
     float thickness = 0.01;
-    if(abs(x[2]) < thickness && dist < diskRadius && dist > horizonRadius)
+    if(abs(x[2]) < thickness && dist < diskRadius && dist > metric_horizon)
     {
         return true;
     }
@@ -517,12 +544,9 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //bool hitDisk = diskHit(x, dist);
     //float noise = DiskNoise(x);
 
-    if((dist < 1.01 * horizonRadius))
+    if((dist < (1.0 + 10*tol) * metric_horizon))
     {
-        // Blend black with previous color
-        Color[id.xy] = Blend(Color[id.xy], float4(0.0, 0.0, 0.0, 0.0));
-
-        // Set complete flag
+        Color[id.xy] = float4(0.0, 0.0, 0.0, 0.0);
         isComplete[id.xy] = 1;
     }
 
@@ -531,12 +555,10 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //    Color[id.xy] = Blend(Color[id.xy], noise * float4(0.2, 0.02, 0.0, 0.1));
     //} 
 
-    if(dist > 1000.0)
+    if(dist > 200.0)
     {
         float4 skyboxColor = float4(SampleBackground(x, camPos), 1.0);
-        // Blend with previous color value
-        Color[id.xy] = Blend(Color[id.xy], skyboxColor);
-        // Set complete flag
+        Color[id.xy] = skyboxColor;
         isComplete[id.xy] = 1;
     }
 }

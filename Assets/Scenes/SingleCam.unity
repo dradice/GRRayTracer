@@ -187,20 +187,19 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
-  timeStep: 0.001
+  timeStep: 0.01
   escapeDistance: 10000
-  errorTolerance: 0.001
+  errorTolerance: 0.01
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 1000
-  maxPasses: 1500
+  maxPasses: 2000
   subfolder: 
   exitOnComplete: 0
   completeFace: 0
   diskRadius: 3
-  horizonRadius: 0.5
   camChoice: 1
   is360: 0
   _momentum: {x: 0, y: 0, z: 0, w: 0}
@@ -323,20 +322,19 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
-  timeStep: 0.001
+  timeStep: 0.01
   escapeDistance: 10000
-  errorTolerance: 0.001
+  errorTolerance: 0.01
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 1000
-  maxPasses: 1500
+  maxPasses: 2000
   subfolder: 
   exitOnComplete: 0
   completeFace: 0
   diskRadius: 3
-  horizonRadius: 0.5
   camChoice: 1
   is360: 0
   _momentum: {x: 0, y: 0, z: 0, w: 0}
@@ -459,20 +457,19 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
-  timeStep: 0.001
+  timeStep: 0.01
   escapeDistance: 10000
-  errorTolerance: 0.001
+  errorTolerance: 0.01
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 1000
-  maxPasses: 1500
+  maxPasses: 2000
   subfolder: 
   exitOnComplete: 0
   completeFace: 0
   diskRadius: 3
-  horizonRadius: 0.5
   camChoice: 1
   is360: 0
   _momentum: {x: 0, y: 0, z: 0, w: 0}
@@ -595,20 +592,19 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
-  timeStep: 0.001
+  timeStep: 0.01
   escapeDistance: 10000
-  errorTolerance: 0.001
+  errorTolerance: 0.01
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 1000
-  maxPasses: 1500
+  maxPasses: 2000
   subfolder: 
   exitOnComplete: 0
   completeFace: 0
   diskRadius: 3
-  horizonRadius: 0.5
   camChoice: 1
   is360: 0
   _momentum: {x: 0, y: 0, z: 0, w: 0}
@@ -708,7 +704,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1066622174}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 18649578ef176424e8b5cc0e81ba4cdf, type: 3}
   m_Name: 
@@ -929,20 +925,19 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
-  timeStep: 0.001
+  timeStep: 0.01
   escapeDistance: 10000
-  errorTolerance: 0.001
+  errorTolerance: 0.01
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 1000
-  maxPasses: 15000
+  maxPasses: 2000
   subfolder: 
   exitOnComplete: 0
   completeFace: 0
   diskRadius: 3
-  horizonRadius: 0.5
   camChoice: 1
   is360: 0
   _momentum: {x: 0, y: 0, z: 0, w: 0}
@@ -1101,20 +1096,19 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
-  timeStep: 0.001
+  timeStep: 0.01
   escapeDistance: 10000
-  errorTolerance: 0.001
+  errorTolerance: 0.01
   numFrames: 1000000
   framesPerSecond: 30
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 1000
-  maxPasses: 2000
+  maxPasses: 3000
   subfolder: 
   exitOnComplete: 0
   completeFace: 0
   diskRadius: 0
-  horizonRadius: 0.5
   camChoice: 1
   is360: 0
   _momentum: {x: 0, y: 0, z: 0, w: 0}

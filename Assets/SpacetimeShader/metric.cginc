@@ -1,13 +1,12 @@
 #ifndef METRIC_CG_INCLUDE
-// Upgrade NOTE: excluded shader from DX11, OpenGL ES 2.0 because it uses unsized arrays
-#pragma exclude_renderers d3d11 gles
 #define METRIC_CG_INCLUDE
 #define METRIC_SIZE 2000
 
-float metric_rmin = 5.000000e-03;
-float metric_dr = 1.000000e-02;
+static const float metric_horizon = 1.495626e+00;
+static const float metric_rmin = 5.000000e-03;
+static const float metric_dr = 1.000000e-02;
 
-public float[] metric_lapse = {
+static const float metric_lapse[2000] = {
     1.054134189619000e-03,
     2.473179182011000e-03,
     4.705940597051000e-03,
@@ -2010,7 +2009,7 @@ public float[] metric_lapse = {
     8.647004477035000e-01,
 };
 
-public float[] metric_betar = {
+static const float metric_betar[2000] = {
     2.438768707264000e-03,
     7.277997421450000e-03,
     1.207111390038000e-02,
@@ -4013,7 +4012,7 @@ public float[] metric_betar = {
     5.397359303429000e-03,
 };
 
-public float[] metric_grr = {
+static const float metric_grr[2000] = {
     1.000000000000000e+06,
     1.000000000000000e+06,
     1.944810000000000e+05,
@@ -6016,7 +6015,7 @@ public float[] metric_grr = {
     1.103839819869000e+00,
 };
 
-public float[] metric_gT = {
+static const float metric_gT[2000] = {
     1.000000000000000e+06,
     1.000000000000000e+06,
     1.944810000000000e+05,
