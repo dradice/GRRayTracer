@@ -17,7 +17,14 @@ RWTexture2D<float> ErrorTolerance;
 // Input textures
 Texture2D<float4> _SkyboxTexture;
 
+//#define ANALYTIC_METRIC
+
+#ifndef ANALYTIC_METRIC
 #include "metric.cginc"
+#else
+static const float metric_horizon = 1.0;
+static const float metric_dr = 0.01;
+#endif
 
 // Step size parameters
 //float timeStep;
@@ -81,6 +88,7 @@ float Interpolate(float r, float values[METRIC_SIZE])
 
 float Lapse(float r)
 {
+#ifndef ANALYTIC_METRIC
     int i = (r - metric_rmin)/metric_dr;
     i = max(0, min(METRIC_SIZE - 2, i));
     //return metric_lapse[i];
@@ -88,8 +96,10 @@ float Lapse(float r)
     lambda = max(0.0, min(1.0, lambda));
     float v = metric_lapse[i]*(1 - lambda) + (metric_lapse[i+1]*lambda);
     return v;
-    //float rho_s = 1.0;
-    //return ((1 - rho_s / r) / (1 + rho_s / r));
+#else
+    float rho_s = 1.0;
+    return ((1 - rho_s / r) / (1 + rho_s / r));
+#endif
 }
 
 float Betar(float r)
@@ -105,26 +115,32 @@ float Betar(float r)
 
 float Gammarr(float r)
 {
+#ifndef ANALYTIC_METRIC
     int i = (r - metric_rmin)/metric_dr;
     i = max(0, min(METRIC_SIZE - 2, i));
     float lambda = (r - metric_rmin - (i * metric_dr)) / metric_dr;
     lambda = max(0.0, min(1.0, lambda));
     float v = metric_grr[i]*(1 - lambda) + (metric_grr[i+1]*lambda);
     return v;
-    //float rho_s = 1.0;
-    //return Pow4(1 + (rho_s / r));
+#else
+    float rho_s = 1.0;
+    return Pow4(1 + (rho_s / r));
+#endif
 }
 
 float GammaT(float r)
 {
+#ifndef ANALYTIC_METRIC
     int i = (r - metric_rmin)/metric_dr;
     i = max(0, min(METRIC_SIZE - 2, i));
     float lambda = (r - metric_rmin - (i * metric_dr)) / metric_dr;
     lambda = max(0.0, min(1.0, lambda));
     float v = metric_gT[i]*(1 - lambda) + (metric_gT[i+1]*lambda);
     return v;
-    //float rho_s = 1.0;
-    //return Pow4(1 + (rho_s / r));
+#else
+    float rho_s = 1.0;
+    return Pow4(1 + (rho_s / r));
+#endif
 }
 
 float4x4 Metric(float4 x)
