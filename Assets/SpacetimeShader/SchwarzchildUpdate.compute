@@ -18,6 +18,7 @@ RWTexture2D<float> ErrorTolerance;
 Texture2D<float4> _SkyboxTexture;
 
 //#define ANALYTIC_METRIC
+//#define FLAT_METRIC
 
 #ifndef ANALYTIC_METRIC
 #include "metric.cginc"
@@ -97,8 +98,12 @@ float Lapse(float r)
     float v = metric_lapse[i]*(1 - lambda) + (metric_lapse[i+1]*lambda);
     return v;
 #else
+#ifndef FLAT_METRIC
     float rho_s = 1.0;
     return ((1 - rho_s / r) / (1 + rho_s / r));
+#else
+    return 1.0;
+#endif
 #endif
 }
 
@@ -123,8 +128,12 @@ float Gammarr(float r)
     float v = metric_grr[i]*(1 - lambda) + (metric_grr[i+1]*lambda);
     return v;
 #else
+#ifndef FLAT_METRIC
     float rho_s = 1.0;
     return Pow4(1 + (rho_s / r));
+#else
+    return 1.0;
+#endif
 #endif
 }
 
@@ -138,8 +147,12 @@ float GammaT(float r)
     float v = metric_gT[i]*(1 - lambda) + (metric_gT[i+1]*lambda);
     return v;
 #else
+#ifndef FLAT_METRIC
     float rho_s = 1.0;
     return Pow4(1 + (rho_s / r));
+#else
+    return 1.0;
+#endif
 #endif
 }
 
