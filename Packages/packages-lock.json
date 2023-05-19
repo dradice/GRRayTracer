@@ -76,7 +76,27 @@
     },
     "com.unity.subsystemregistration": {
       "version": "1.1.0",
+<<<<<<< Updated upstream
       "depth": 2,
+=======
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.modules.subsystems": "1.0.0"
+      },
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.sysroot": {
+      "version": "2.0.5",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.sysroot.linux-x86_64": {
+      "version": "2.0.4",
+      "depth": 1,
+>>>>>>> Stashed changes
       "source": "registry",
       "dependencies": {
         "com.unity.modules.subsystems": "1.0.0"
