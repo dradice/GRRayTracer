@@ -17,6 +17,12 @@
 # Recordings can get excessive in size
 /[Rr]ecordings/
 
+# Generated Frames
+*.jpg
+*.jpeg
+*.png
+
+
 # Uncomment this line if you wish to ignore the asset store tools plugin
 # /[Aa]ssets/AssetStoreTools*
 
