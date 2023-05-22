@@ -1095,7 +1095,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
-  skyboxTexture: {fileID: 2800000, guid: 4347bb283a6361c9cb2869f5568009f8, type: 3}
+  skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
   timeStep: 0.01
   escapeDistance: 10000
   errorTolerance: 0.01
