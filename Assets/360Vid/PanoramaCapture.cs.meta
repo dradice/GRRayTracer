@@ -4,12 +4,6 @@ MonoImporter:
   externalObjects: {}
   serializedVersion: 2
   defaultReferences:
-  - front: {instanceID: 0}
-  - back: {instanceID: 0}
-  - left: {instanceID: 0}
-  - right: {instanceID: 0}
-  - up: {instanceID: 0}
-  - down: {instanceID: 0}
   - faceF: {fileID: 8600000, guid: 22408e97a140df64abff3e9111a26432, type: 2}
   - faceB: {fileID: 8400000, guid: efe364e62e33ea74fa45037ef79d2e0f, type: 2}
   - faceL: {fileID: 8400000, guid: d7c33710db60fc6479cc95dd112514f8, type: 2}

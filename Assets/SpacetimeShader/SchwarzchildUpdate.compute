@@ -17,7 +17,7 @@ RWTexture2D<float> ErrorTolerance;
 // Input textures
 Texture2D<float4> _SkyboxTexture;
 
-//#define ANALYTIC_METRIC
+#define ANALYTIC_METRIC
 //#define FLAT_METRIC
 
 #ifndef ANALYTIC_METRIC

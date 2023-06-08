@@ -21,45 +21,76 @@ public class PanoramaCapture : MonoBehaviour
     public RenderTexture cubeMapLeft;
     public RenderTexture equirectRT;
 
-    public int fCount = 0;
+    public int completeFaces;
+    public int frameCount = 0;
+
+    public int cfCount;
+    public int cbCount;
+    public int clCount;
+    public int crCount;
+    public int cuCount;
+    public int cdCount;
+
+    public bool capture = false;
 
     // Start is called before the first frame update
     void Start()
     {
-        GameObject cf = GameObject.Find("CameraF");
+        /*GameObject cf = GameObject.Find("CameraF");
         RayTraceCameraBHVR cfFrames = cf.GetComponent<RayTraceCameraBHVR>();
-        int cfCount = cfFrames.completeFace;
+        int cfCount = cfFrames.completeFace;*/
     }
 
     // Update is called once per frame
     void Update()
     {
-        GameObject multiCam = GameObject.Find("360Cam");
-        UnifyCameras unify = multiCam.GetComponent<UnifyCameras>();
-        int frameTrack = unify.captureFrame;
-        bool is360 = unify.is360;
-        if(!is360)
-        {
-            back = null;
-            left = null;
-            right = null;
-            up = null;
-            down = null;
-        }
-        if (frameTrack > fCount)
-        {
-            
-            fCount = frameTrack;
-            if (is360)
-            {
-                Capture();
-            }
-        }
+        GameObject cf = GameObject.Find("CameraF");
+        RayTraceCameraBHVR cfFrames = cf.GetComponent<RayTraceCameraBHVR>();
+        cfCount = cfFrames.faceNumber;
 
+        GameObject cb = GameObject.Find("CameraB");
+        RayTraceCameraBHVR cbFrames = cb.GetComponent<RayTraceCameraBHVR>();
+        cbCount = cbFrames.faceNumber;
+
+        GameObject cl = GameObject.Find("CameraL");
+        RayTraceCameraBHVR clFrames = cl.GetComponent<RayTraceCameraBHVR>();
+        clCount = clFrames.faceNumber;
+
+        GameObject cr = GameObject.Find("CameraR");
+        RayTraceCameraBHVR crFrames = cr.GetComponent<RayTraceCameraBHVR>();
+        crCount = crFrames.faceNumber;
+
+        GameObject cu = GameObject.Find("CameraU");
+        RayTraceCameraBHVR cuFrames = cu.GetComponent<RayTraceCameraBHVR>();
+        cuCount = cuFrames.faceNumber;
+
+        GameObject cd = GameObject.Find("CameraD");
+        RayTraceCameraBHVR cdFrames = cd.GetComponent<RayTraceCameraBHVR>();
+        cdCount = cdFrames.faceNumber;
+
+        completeFaces = cfCount + cbCount + clCount + crCount + cuCount + cdCount;
+        Debug.Log("Complete Faces Panorama Capture = " + completeFaces);
+        Debug.Log("f = " + cfCount);
+        Debug.Log("b = " + cbCount);
+        Debug.Log("l = " + clCount);
+        Debug.Log("r = " + crCount);
+        Debug.Log("u = " + cuCount);
+        Debug.Log("d = " + cdCount);
+
+        capture = cfFrames.capture;
+
+        if (completeFaces == 6)
+        {
+            Debug.Log("six faces");
+            completeFaces = 0;
+            Debug.Log("Panorama Capture " + completeFaces);
+            Capture();
+        }
     }
 
     void Capture()
     {
+        Debug.Log("Capturing");
         Graphics.CopyTexture(faceR, 0, cubeMapLeft, 0);
         Graphics.CopyTexture(faceL, 0, cubeMapLeft, 1);
         Graphics.CopyTexture(faceD, 0, cubeMapLeft, 2);
@@ -68,7 +99,7 @@ public class PanoramaCapture : MonoBehaviour
         Graphics.CopyTexture(faceB, 0, cubeMapLeft, 5);
 
         cubeMapLeft.ConvertToEquirect(equirectRT, Camera.MonoOrStereoscopicEye.Mono);
-    
+
 
         Save(equirectRT);
     }
@@ -83,7 +114,8 @@ public class PanoramaCapture : MonoBehaviour
 
         byte[] bytes = tex.EncodeToJPG();
 
-        string path = Application.dataPath + "/360" + "_" + fCount.ToString() + ".jpeg";
+        string path = Application.dataPath + "/360" + "_" + frameCount.ToString() + ".jpeg";
         System.IO.File.WriteAllBytes(path, bytes);
+        frameCount++;
     }
 }

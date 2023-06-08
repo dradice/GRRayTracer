@@ -18,7 +18,7 @@ float4 _Momentum;
 float timeStep;
 float errorTolerance;
 
-//#define ANALYTIC_METRIC
+#define ANALYTIC_METRIC
 //#define FLAT_METRIC
 
 #ifndef ANALYTIC_METRIC
@@ -159,14 +159,14 @@ float gammaT(float t, float r)
 
 float4x4 Metric(float4 x)
 {
-    /*float4x4 g_flat = 
-    {
-        {-1., 0., 0., 0.},
-        {0., 1., 0., 0.},
-        {0., 0., 1., 0.},
-        {0., 0., 0., 1.}
-    };
-    return g_flat;*/
+    // float4x4 g_flat = 
+    // {
+    //     {-1., 0., 0., 0.},
+    //     {0., 1., 0., 0.},
+    //     {0., 0., 1., 0.},
+    //     {0., 0., 0., 1.}
+    // };
+    // return g_flat;
     
     int a, b, c, d;
 

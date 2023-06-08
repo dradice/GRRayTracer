@@ -387,9 +387,9 @@ public class Freefall : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        GameObject multiCam = GameObject.Find("360Cam");
+        /*GameObject multiCam = GameObject.Find("360Cam");
         PanoramaCapture unify = multiCam.GetComponent<PanoramaCapture>();
-        numFrames = unify.fCount;
+        numFrames = unify.frameCount;*/
 
         /*if (numFrames > numFramesCheck)
         {*/
