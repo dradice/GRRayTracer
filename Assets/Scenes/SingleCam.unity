@@ -194,7 +194,7 @@ MonoBehaviour:
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 10
-  maxPasses: 4000
+  maxPasses: 2000
   subfolder: 
   exitOnComplete: 0
   diskRadius: 3
@@ -243,7 +243,7 @@ Camera:
   field of view: 90
   orthographic: 0
   orthographic size: 5
-  m_Depth: -1
+  m_Depth: 1
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -329,7 +329,7 @@ MonoBehaviour:
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 10
-  maxPasses: 4000
+  maxPasses: 2000
   subfolder: 
   exitOnComplete: 0
   diskRadius: 3
@@ -378,7 +378,7 @@ Camera:
   field of view: 90
   orthographic: 0
   orthographic size: 5
-  m_Depth: -1
+  m_Depth: 1
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -448,7 +448,7 @@ MonoBehaviour:
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 10
-  maxPasses: 4000
+  maxPasses: 2000
   subfolder: 
   exitOnComplete: 0
   diskRadius: 3
@@ -497,7 +497,7 @@ Camera:
   field of view: 90
   orthographic: 0
   orthographic size: 5
-  m_Depth: -1
+  m_Depth: 1
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -583,7 +583,7 @@ MonoBehaviour:
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 10
-  maxPasses: 4000
+  maxPasses: 2000
   subfolder: 
   exitOnComplete: 0
   diskRadius: 3
@@ -632,7 +632,7 @@ Camera:
   field of view: 90
   orthographic: 0
   orthographic size: 5
-  m_Depth: -1
+  m_Depth: 1
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -677,12 +677,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6e21416a8125af4a9cb5328cd323f6a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  front: {fileID: 0}
-  back: {fileID: 0}
-  left: {fileID: 0}
-  right: {fileID: 0}
-  up: {fileID: 0}
-  down: {fileID: 0}
+  front: {fileID: 1920951165}
+  back: {fileID: 1507237127}
+  left: {fileID: 376621357}
+  right: {fileID: 100707191}
+  up: {fileID: 151272454}
+  down: {fileID: 376621357}
   faceF: {fileID: 8600000, guid: 22408e97a140df64abff3e9111a26432, type: 2}
   faceB: {fileID: 8400000, guid: efe364e62e33ea74fa45037ef79d2e0f, type: 2}
   faceL: {fileID: 8400000, guid: d7c33710db60fc6479cc95dd112514f8, type: 2}
@@ -730,7 +730,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1066622174}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -20}
+  m_LocalPosition: {x: 0, y: 1, z: -118.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1920951166}
@@ -908,7 +908,7 @@ MonoBehaviour:
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 10
-  maxPasses: 4000
+  maxPasses: 2000
   subfolder: 
   exitOnComplete: 0
   diskRadius: 3
@@ -957,7 +957,7 @@ Camera:
   field of view: 90
   orthographic: 0
   orthographic size: 5
-  m_Depth: -1
+  m_Depth: 1
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -1019,7 +1019,7 @@ Camera:
   field of view: 90
   orthographic: 0
   orthographic size: 5
-  m_Depth: -1
+  m_Depth: 1
   m_CullingMask:
     serializedVersion: 2
     m_Bits: 4294967295
@@ -1071,7 +1071,7 @@ MonoBehaviour:
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 10
-  maxPasses: 4000
+  maxPasses: 2000
   subfolder: 
   exitOnComplete: 0
   diskRadius: 0

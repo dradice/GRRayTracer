@@ -110,12 +110,33 @@ public class PanoramaCapture : MonoBehaviour
 
         RenderTexture.active = rt;
         tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+        Texture2D flippedTex = FlipTexture(tex);
         RenderTexture.active = null;
 
-        byte[] bytes = tex.EncodeToJPG();
+        byte[] bytes = flippedTex.EncodeToJPG();
 
         string path = Application.dataPath + "/360" + "_" + frameCount.ToString() + ".jpeg";
         System.IO.File.WriteAllBytes(path, bytes);
         frameCount++;
+    }
+
+    Texture2D FlipTexture(Texture2D original)
+    {
+        Texture2D flipped = new Texture2D(original.width, original.height);
+
+        int xN = original.width;
+        int yN = original.height;
+
+
+        for (int i = 0; i < xN; i++)
+        {
+            for (int j = 0; j < yN; j++)
+            {
+                flipped.SetPixel(i, yN - j - 1, original.GetPixel(i, j));
+            }
+        }
+        flipped.Apply();
+
+        return flipped;
     }
 }

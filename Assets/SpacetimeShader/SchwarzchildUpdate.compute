@@ -5,6 +5,10 @@
 // Constants
 static const float PI = 3.14159265f;
 
+float eps = 0.5;
+
+float s = 0.0;
+
 // Output parameters
 RWTexture2D<float4> Position;
 RWTexture2D<float4> Direction;
@@ -156,8 +160,59 @@ float GammaT(float r)
 #endif
 }
 
-float4x4 Metric(float4 x)
+float4x4 Metric(float4 xyz)
 {
+  float x = xyz[1];
+  float y = xyz[2];
+  float z = xyz[3];
+
+  float rad = sqrt(Pow2(x) + Pow2(y) + Pow2(z));
+  float r = sqrt((Pow2(rad)-Pow2(s)+sqrt(Pow2(Pow2(rad)-Pow2(s))+4.0*Pow2(s)*Pow2(z)))/2.0);
+
+  if(r < eps)
+  {
+    r = eps / 2.0 + (r*r / (2*eps));
+  }
+
+  // Set covariant components
+  // null vector l
+  float l_lower[4];
+  l_lower[0] = 1.0;
+  l_lower[1] = (r*x + (s)*y)/( Pow2(r) + Pow2(s) );
+  l_lower[2] = (r*y - (s)*x)/( Pow2(r) + Pow2(s) );
+  l_lower[3] = z/r;
+
+  // g_nm = f*l_n*l_m + eta_nm, where eta_nm is Minkowski metric
+
+  float4x4 glower = 
+    {
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.},
+        {0., 0., 0., 0.}
+    };
+
+  float f = 2.0 * Pow2(r)*r / (Pow2(Pow2(r)) + Pow2(s)*Pow2(z));
+
+  glower[0][0] = f * l_lower[0]*l_lower[0] - 1.0;
+  glower[0][1] = f * l_lower[0]*l_lower[1];
+  glower[0][2] = f * l_lower[0]*l_lower[2];
+  glower[0][3] = f * l_lower[0]*l_lower[3];
+  glower[1][0] = glower[0][1];
+  glower[1][1] = f * l_lower[1]*l_lower[1] + 1.0;
+  glower[1][2] = f * l_lower[1]*l_lower[2];
+  glower[1][3] = f * l_lower[1]*l_lower[3];
+  glower[2][0] = glower[0][2];
+  glower[2][1] = glower[1][2];
+  glower[2][2] = f * l_lower[2]*l_lower[2] + 1.0;
+  glower[2][3] = f * l_lower[2]*l_lower[3];
+  glower[3][0] = glower[0][3];
+  glower[3][1] = glower[1][3];
+  glower[3][2] = glower[2][3];
+  glower[3][3] = f * l_lower[3]*l_lower[3] + 1.0;
+
+  return glower;
+
     /*float4x4 g_flat = 
     {
         {-1., 0., 0., 0.},
@@ -167,84 +222,84 @@ float4x4 Metric(float4 x)
     };
     return g_flat;*/
     
-    int a, b, c, d;
+    // int a, b, c, d;
 
-    float r         = max(1e-6,sqrt(x[1]*x[1] + x[2]*x[2] + x[3]*x[3]));
-    float theta     = max(1e-6, min(PI - 1e-6, acos(x[3]/r)));
-    float phi       = atan2(x[2], x[1]);
-    float cos_theta = cos(theta);
-    float sin_theta = sin(theta);
-    float cos_phi   = cos(phi);
-    float sin_phi   = sin(phi);
-    float ir        = 1.0/r;
-    float csc_theta = 1.0/sin_theta;
+    // float r         = max(1e-6,sqrt(x[1]*x[1] + x[2]*x[2] + x[3]*x[3]));
+    // float theta     = max(1e-6, min(PI - 1e-6, acos(x[3]/r)));
+    // float phi       = atan2(x[2], x[1]);
+    // float cos_theta = cos(theta);
+    // float sin_theta = sin(theta);
+    // float cos_phi   = cos(phi);
+    // float sin_phi   = sin(phi);
+    // float ir        = 1.0/r;
+    // float csc_theta = 1.0/sin_theta;
     
-    float alpha = Lapse(r);
-    float betar = Betar(r);
-    float g_rr = Gammarr(r);
-    float g_T = GammaT(r);
+    // float alpha = Lapse(r);
+    // float betar = Betar(r);
+    // float g_rr = Gammarr(r);
+    // float g_T = GammaT(r);
 
-    float4x4 g_Spherical =
-    {
-    	{-(Pow2(alpha) + g_rr * Pow2(betar)), g_rr * betar, 0., 0.},
-    	{g_rr * betar, g_rr, 0., 0.},
-    	{0., 0., g_T * r * r, 0.},
-    	{0., 0., 0., g_T * Pow2(r * sin_theta)}
-    };
+    // float4x4 g_Spherical =
+    // {
+    // 	{-(Pow2(alpha) + g_rr * Pow2(betar)), g_rr * betar, 0., 0.},
+    // 	{g_rr * betar, g_rr, 0., 0.},
+    // 	{0., 0., g_T * r * r, 0.},
+    // 	{0., 0., 0., g_T * Pow2(r * sin_theta)}
+    // };
 
-    float4x4 g_Cartesian = 
-    {
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.}
-    };
-    float4x4 g_tmp = 
-    {
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.}
-    };
+    // float4x4 g_Cartesian = 
+    // {
+    //     {0., 0., 0., 0.},
+    //     {0., 0., 0., 0.},
+    //     {0., 0., 0., 0.},
+    //     {0., 0., 0., 0.}
+    // };
+    // float4x4 g_tmp = 
+    // {
+    //     {0., 0., 0., 0.},
+    //     {0., 0., 0., 0.},
+    //     {0., 0., 0., 0.},
+    //     {0., 0., 0., 0.}
+    // };
 
-    float4x4 J = {
-        {1., 0., 0., 0.},
-        {0.,  sin_theta * cos_phi, sin_theta * sin_phi, cos_theta},
-        {0., ir * cos_theta * cos_phi, ir * cos_theta * sin_phi, - ir * sin_theta},
-        {0., - ir * csc_theta * sin_phi, ir * csc_theta * cos_phi, 0.}
-    };
+    // float4x4 J = {
+    //     {1., 0., 0., 0.},
+    //     {0.,  sin_theta * cos_phi, sin_theta * sin_phi, cos_theta},
+    //     {0., ir * cos_theta * cos_phi, ir * cos_theta * sin_phi, - ir * sin_theta},
+    //     {0., - ir * csc_theta * sin_phi, ir * csc_theta * cos_phi, 0.}
+    // };
     
-    [unroll]
-    for(a = 0; a < 4; a++)
-    {
-        [unroll]
-        for(d = 0; d < 4; d++)
-        {
-            [unroll]
-            for(c = 0; c < 4; c++)
-            {
-            	g_tmp[a][d] += g_Spherical[c][d] * J[c][a];
-            }
-        }
-    }
-    [unroll]
-    for(a = 0; a < 4; a++)
-    {
-        [unroll]
-        for(b = 0; b < 4; b++)
-        {
-            [unroll]
-            for(d = 0; d < 4; d++)
-            {
-            	g_Cartesian[a][b] += g_tmp[a][d] * J[d][b];
-            }
-        }
-    }
+    // [unroll]
+    // for(a = 0; a < 4; a++)
+    // {
+    //     [unroll]
+    //     for(d = 0; d < 4; d++)
+    //     {
+    //         [unroll]
+    //         for(c = 0; c < 4; c++)
+    //         {
+    //         	g_tmp[a][d] += g_Spherical[c][d] * J[c][a];
+    //         }
+    //     }
+    // }
+    // [unroll]
+    // for(a = 0; a < 4; a++)
+    // {
+    //     [unroll]
+    //     for(b = 0; b < 4; b++)
+    //     {
+    //         [unroll]
+    //         for(d = 0; d < 4; d++)
+    //         {
+    //         	g_Cartesian[a][b] += g_tmp[a][d] * J[d][b];
+    //         }
+    //     }
+    // }
     
-    return g_Cartesian;
+    // return g_Cartesian;
 }
 
-float4x4 InverseMetric(float4 x)
+float4x4 InverseMetric(float4 xyz)
 {
     /*
     float4x4 g_flat = 
@@ -256,81 +311,131 @@ float4x4 InverseMetric(float4 x)
     };
     return g_flat;*/
 
-    int a, b, c, d;
+    // int a, b, c, d;
 
-    float r         = max(1e-6,sqrt(x[1]*x[1] + x[2]*x[2] + x[3]*x[3]));
-    float theta     = max(1e-6, min(PI - 1e-6, acos(x[3]/r)));
-    float phi       = atan2(x[2], x[1]);
-    float cos_theta = cos(theta);
-    float sin_theta = sin(theta);
-    float cos_phi   = cos(phi);
-    float sin_phi   = sin(phi);
+    // float r         = max(1e-6,sqrt(x[1]*x[1] + x[2]*x[2] + x[3]*x[3]));
+    // float theta     = max(1e-6, min(PI - 1e-6, acos(x[3]/r)));
+    // float phi       = atan2(x[2], x[1]);
+    // float cos_theta = cos(theta);
+    // float sin_theta = sin(theta);
+    // float cos_phi   = cos(phi);
+    // float sin_phi   = sin(phi);
 
-    float alpha = Lapse(r);
-    float betar = Betar(r);
-    float g_rr = Gammarr(r);
-    float g_T = GammaT(r);
+    // float alpha = Lapse(r);
+    // float betar = Betar(r);
+    // float g_rr = Gammarr(r);
+    // float g_T = GammaT(r);
 
-    float4x4 g_Spherical =
-    {
-    	{-1. / Pow2(alpha), betar / (Pow2(alpha)), 0., 0.},
-        {betar / Pow2(alpha), (1. / (g_rr)) - Pow2(betar/alpha), 0., 0.},
-  	{0., 0., 1. / (g_T * r * r), 0.},
-    	{0., 0., 0., 1. / (g_T * Pow2(r * sin_theta))},
-    };
+    // float4x4 g_Spherical =
+    // {
+    // 	{-1. / Pow2(alpha), betar / (Pow2(alpha)), 0., 0.},
+    //     {betar / Pow2(alpha), (1. / (g_rr)) - Pow2(betar/alpha), 0., 0.},
+  	// {0., 0., 1. / (g_T * r * r), 0.},
+    // 	{0., 0., 0., 1. / (g_T * Pow2(r * sin_theta))},
+    // };
 
-    float4x4 g_Cartesian = 
+    // float4x4 g_Cartesian = 
+    // {
+    //     {0., 0., 0., 0.},
+    //     {0., 0., 0., 0.},
+    //     {0., 0., 0., 0.},
+    //     {0., 0., 0., 0.}
+    // };
+    // float4x4 g_tmp = 
+    // {
+    //     {0., 0., 0., 0.},
+    //     {0., 0., 0., 0.},
+    //     {0., 0., 0., 0.},
+    //     {0., 0., 0., 0.}
+    // };
+
+    // float4x4 J_inv =
+    // {
+    //     {1., 0., 0., 0.},
+    //     {0., sin_theta * cos_phi, r * cos_theta * cos_phi, - r * sin_theta * sin_phi},
+    //     {0., sin_theta * sin_phi, r * cos_theta * sin_phi, r * sin_theta * cos_phi},
+    //     {0., cos_theta, - r * sin_theta, 0.}
+    // };
+
+    // [unroll]
+    // for(a = 0; a < 4; a++)
+    // {
+    //     [unroll]
+    //     for(d = 0; d < 4; d++)
+    //     {
+    //         [unroll]
+    //         for(c = 0; c < 4; c++)
+    //         {
+    //             g_tmp[a][d] += g_Spherical[c][d] * J_inv[a][c];
+    //         }
+    //     }
+    // }
+    
+    // [unroll]
+    // for(a = 0; a < 4; a++)
+    // {
+    //     [unroll]
+    //     for(b = 0; b < 4; b++)
+    //     {
+    //         [unroll]
+    //         for(d = 0; d < 4; d++)
+    //         {
+    //             g_Cartesian[a][b] += g_tmp[a][d] * J_inv[b][d];
+    //         }
+    //     }
+    // }
+    
+    // return g_Cartesian;
+
+    float x = xyz[1];
+    float y = xyz[2];
+    float z = xyz[3];
+  
+  float rad = sqrt(Pow2(x) + Pow2(y) + Pow2(z));
+  float r = sqrt((Pow2(rad)-Pow2(s)+sqrt(Pow2(Pow2(rad)-Pow2(s))+4.0*Pow2(s)*Pow2(z)))/2.0);
+  
+  if(r < eps)
+  {
+    r = eps/2 + (r*r / (2*eps));
+  }
+
+  // Set contravariant components
+  // null vector l
+  float l_upper[4];
+  l_upper[0] = -1.0;
+  l_upper[1] = (r*x + (s)*y)/( Pow2(r) + Pow2(s) );
+  l_upper[2] = (r*y - (s)*x)/( Pow2(r) + Pow2(s) );
+  l_upper[3] = z/r;
+
+  float4x4 gupper = 
     {
         {0., 0., 0., 0.},
         {0., 0., 0., 0.},
         {0., 0., 0., 0.},
         {0., 0., 0., 0.}
     };
-    float4x4 g_tmp = 
-    {
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.},
-        {0., 0., 0., 0.}
-    };
 
-    float4x4 J_inv =
-    {
-        {1., 0., 0., 0.},
-        {0., sin_theta * cos_phi, r * cos_theta * cos_phi, - r * sin_theta * sin_phi},
-        {0., sin_theta * sin_phi, r * cos_theta * sin_phi, r * sin_theta * cos_phi},
-        {0., cos_theta, - r * sin_theta, 0.}
-    };
+    float f = 2.0 * Pow2(r)*r / (Pow2(Pow2(r)) + Pow2(s)*Pow2(z));
+    
+  // g^nm = -f*l^n*l^m + eta^nm, where eta^nm is Minkowski metric
+  gupper[0][0] = -f * l_upper[0]*l_upper[0] - 1.0;
+  gupper[0][1] = -f * l_upper[0]*l_upper[1];
+  gupper[0][2] = -f * l_upper[0]*l_upper[2];
+  gupper[0][3] = -f * l_upper[0]*l_upper[3];
+  gupper[1][0] = gupper[0][1];
+  gupper[1][1] = -f * l_upper[1]*l_upper[1] + 1.0;
+  gupper[1][2] = -f * l_upper[1]*l_upper[2];
+  gupper[1][3] = -f * l_upper[1]*l_upper[3];
+  gupper[2][0] = gupper[0][2];
+  gupper[2][1] = gupper[1][2];
+  gupper[2][2] = -f * l_upper[2]*l_upper[2] + 1.0;
+  gupper[2][3] = -f * l_upper[2]*l_upper[3];
+  gupper[3][0] = gupper[0][3];
+  gupper[3][1] = gupper[1][3];
+  gupper[3][2] = gupper[2][3];
+  gupper[3][3] = -f * l_upper[3]*l_upper[3] + 1.0;
 
-    [unroll]
-    for(a = 0; a < 4; a++)
-    {
-        [unroll]
-        for(d = 0; d < 4; d++)
-        {
-            [unroll]
-            for(c = 0; c < 4; c++)
-            {
-                g_tmp[a][d] += g_Spherical[c][d] * J_inv[a][c];
-            }
-        }
-    }
-    
-    [unroll]
-    for(a = 0; a < 4; a++)
-    {
-        [unroll]
-        for(b = 0; b < 4; b++)
-        {
-            [unroll]
-            for(d = 0; d < 4; d++)
-            {
-                g_Cartesian[a][b] += g_tmp[a][d] * J_inv[b][d];
-            }
-        }
-    }
-    
-    return g_Cartesian;
+  return gupper;
 }
     
 float4x4 Derivative(float4 x, int a)

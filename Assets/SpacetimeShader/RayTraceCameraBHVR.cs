@@ -156,12 +156,12 @@ public class RayTraceCameraBHVR : MonoBehaviour
             CheckFaces();
         }
 
-        if(completeFacesRayTraceCameraBHVR == 6)
+        /*if(completeFacesRayTraceCameraBHVR == 6 && totalChecks == 6)
         {
             OnComplete();
-        }
+        }*/
 
-        if ((!renderComplete && cameraState == CameraState.Single) || (cameraState == CameraState.Panorama && !renderComplete && completeFacesRayTraceCameraBHVR !=6))
+        if ((!renderComplete && cameraState == CameraState.Single) || (cameraState == CameraState.Panorama && !renderComplete))
         {
             if (startRender)
             {
@@ -341,10 +341,9 @@ public class RayTraceCameraBHVR : MonoBehaviour
         else
         {
             renderComplete = true;
-            CheckFaces();
+            /*CheckFaces();*/
             Debug.Log("Face render cycle complete!");
-            Debug.Log("Faces = " + completeFacesRayTraceCameraBHVR); 
-            if (completeFacesRayTraceCameraBHVR == 6)
+            /*if (completeFacesRayTraceCameraBHVR == 6)
             {
                 completeCheck++;
                 Debug.Log("Total Checks = " + totalChecks);
@@ -357,56 +356,110 @@ public class RayTraceCameraBHVR : MonoBehaviour
                     currentFrame++;
                     ResetSettings();
                 }
-            } 
+            } */
         }
    }
 
    private void CheckFaces()
    {
+        /* GameObject cf = GameObject.Find("CameraF");
+         RayTraceCameraBHVR cfFrames = cf.GetComponent<RayTraceCameraBHVR>();
+         int cfCount = cfFrames.faceNumber;
+
+         GameObject cb = GameObject.Find("CameraB");
+         RayTraceCameraBHVR cbFrames = cb.GetComponent<RayTraceCameraBHVR>();
+         int cbCount = cbFrames.faceNumber;
+
+         GameObject cl = GameObject.Find("CameraL");
+         RayTraceCameraBHVR clFrames = cl.GetComponent<RayTraceCameraBHVR>();
+         int clCount = clFrames.faceNumber;
+
+         GameObject cr = GameObject.Find("CameraR");
+         RayTraceCameraBHVR crFrames = cr.GetComponent<RayTraceCameraBHVR>();
+         int crCount = crFrames.faceNumber;
+
+         GameObject cu = GameObject.Find("CameraU");
+         RayTraceCameraBHVR cuFrames = cu.GetComponent<RayTraceCameraBHVR>();
+         int cuCount = cuFrames.faceNumber;
+
+         GameObject cd = GameObject.Find("CameraD");
+         RayTraceCameraBHVR cdFrames = cd.GetComponent<RayTraceCameraBHVR>();
+         int cdCount = cdFrames.faceNumber;
+
+         completeFacesRayTraceCameraBHVR = cfCount + cbCount + clCount + crCount + cuCount + cdCount;
+
+         Debug.Log("There are " + completeFacesRayTraceCameraBHVR + " faces ");
+
+         Debug.Log("Still checking, total checks = " + totalChecks);
+
+         if (completeFacesRayTraceCameraBHVR == 6)
+         {
+             completeCheck++;
+
+             int cfCheck = cfFrames.completeCheck;
+
+             int cbCheck = cbFrames.completeCheck;
+
+             int clCheck = clFrames.completeCheck;
+
+             int crCheck = crFrames.completeCheck;
+
+             int cuCheck = cuFrames.completeCheck;
+
+             int cdCheck = cdFrames.completeCheck;
+
+             totalChecks = cfCheck + cbCheck + clCheck + crCheck + cuCheck + cdCheck;
+             Debug.Log("Total Checks = " + totalChecks);
+             if (totalChecks == 6)
+             {
+                 Debug.Log("capture complete");
+                 capture = true;
+                 // Advance time and reset settings
+                 coordinateTime += (1f / framesPerSecond);
+                 currentFrame++;
+                 ResetSettings();
+             }
+         }*/
+
         GameObject cf = GameObject.Find("CameraF");
         RayTraceCameraBHVR cfFrames = cf.GetComponent<RayTraceCameraBHVR>();
-        int cfCount = cfFrames.faceNumber;
+        bool cfComplete = cfFrames.renderComplete;
 
         GameObject cb = GameObject.Find("CameraB");
         RayTraceCameraBHVR cbFrames = cb.GetComponent<RayTraceCameraBHVR>();
-        int cbCount = cbFrames.faceNumber;
+        bool cbComplete = cbFrames.renderComplete;
 
         GameObject cl = GameObject.Find("CameraL");
         RayTraceCameraBHVR clFrames = cl.GetComponent<RayTraceCameraBHVR>();
-        int clCount = clFrames.faceNumber;
+        bool clComplete = clFrames.renderComplete;
 
         GameObject cr = GameObject.Find("CameraR");
         RayTraceCameraBHVR crFrames = cr.GetComponent<RayTraceCameraBHVR>();
-        int crCount = crFrames.faceNumber;
+        bool crComplete = crFrames.renderComplete;
 
         GameObject cu = GameObject.Find("CameraU");
         RayTraceCameraBHVR cuFrames = cu.GetComponent<RayTraceCameraBHVR>();
-        int cuCount = cuFrames.faceNumber;
+        bool cuComplete = cuFrames.renderComplete;
 
         GameObject cd = GameObject.Find("CameraD");
         RayTraceCameraBHVR cdFrames = cd.GetComponent<RayTraceCameraBHVR>();
-        int cdCount = cdFrames.faceNumber;
+        bool cdComplete = cdFrames.renderComplete;
 
-        completeFacesRayTraceCameraBHVR = cfCount + cbCount + clCount + crCount + cuCount + cdCount;
-
-        Debug.Log("There are " + completeFacesRayTraceCameraBHVR + " faces ");
-
-        int cfCheck = cfFrames.completeCheck;
-
-        int cbCheck = cbFrames.completeCheck;
-
-        int clCheck = clFrames.completeCheck;
-
-        int crCheck = crFrames.completeCheck;
-
-        int cuCheck = cuFrames.completeCheck;
-
-        int cdCheck = cdFrames.completeCheck;
-
-        totalChecks = cfCheck + cbCheck + clCheck + crCheck + cuCheck + cdCheck;
-
-        Debug.Log("Still checking, total checks = " + totalChecks);
-   }
+        if(cfComplete && cbComplete && clComplete && crComplete && cuComplete && cdComplete)
+        {
+            Debug.Log("all complete");
+            currentFrame++;
+            /*ResetSettings();*/
+            Debug.Log("Reseting");
+            faceNumber = 0;
+            totalChecks = 0;
+            completeCheck = 0;
+            startRender = true;
+            renderComplete = false;
+            hardCheck = false;
+            completeFacesRayTraceCameraBHVR = 0;
+        }
+    }
 
    private void ResetSettings()
    {
