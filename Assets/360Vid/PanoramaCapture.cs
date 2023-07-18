@@ -29,7 +29,7 @@ public class PanoramaCapture : MonoBehaviour
     public int clCount;
     public int crCount;
     public int cuCount;
-    public int cdCount;
+    public bool captureImage;
 
     public bool capture = false;
 
@@ -45,52 +45,52 @@ public class PanoramaCapture : MonoBehaviour
     void Update()
     {
         GameObject cf = GameObject.Find("CameraF");
-        RayTraceCameraBHVR cfFrames = cf.GetComponent<RayTraceCameraBHVR>();
-        cfCount = cfFrames.faceNumber;
+        RayTraceCameraBHVR cfCam = cf.GetComponent<RayTraceCameraBHVR>();
+        captureImage = cfCam.captureImage;
+
+        if(captureImage)
+        {
+            Debug.Log("capture");
+            Capture();
+            RestartCameras();
+        }
+    }
+
+    void RestartCameras()
+    {
+        GameObject cf = GameObject.Find("CameraF");
+        RayTraceCameraBHVR cfCam = cf.GetComponent<RayTraceCameraBHVR>();
+        cfCam.startRender = true;
+        cfCam.renderComplete = false;
 
         GameObject cb = GameObject.Find("CameraB");
-        RayTraceCameraBHVR cbFrames = cb.GetComponent<RayTraceCameraBHVR>();
-        cbCount = cbFrames.faceNumber;
+        RayTraceCameraBHVR cbCam = cb.GetComponent<RayTraceCameraBHVR>();
+        cbCam.startRender = true;
+        cbCam.renderComplete = false;
 
         GameObject cl = GameObject.Find("CameraL");
-        RayTraceCameraBHVR clFrames = cl.GetComponent<RayTraceCameraBHVR>();
-        clCount = clFrames.faceNumber;
+        RayTraceCameraBHVR clCam = cl.GetComponent<RayTraceCameraBHVR>();
+        clCam.startRender = true;
+        clCam.renderComplete = false;
 
         GameObject cr = GameObject.Find("CameraR");
-        RayTraceCameraBHVR crFrames = cr.GetComponent<RayTraceCameraBHVR>();
-        crCount = crFrames.faceNumber;
+        RayTraceCameraBHVR crCam = cr.GetComponent<RayTraceCameraBHVR>();
+        crCam.startRender = true;
+        crCam.renderComplete = false;
 
         GameObject cu = GameObject.Find("CameraU");
-        RayTraceCameraBHVR cuFrames = cu.GetComponent<RayTraceCameraBHVR>();
-        cuCount = cuFrames.faceNumber;
+        RayTraceCameraBHVR cuCam = cu.GetComponent<RayTraceCameraBHVR>();
+        cuCam.startRender = true;
+        cuCam.renderComplete = false;
 
         GameObject cd = GameObject.Find("CameraD");
-        RayTraceCameraBHVR cdFrames = cd.GetComponent<RayTraceCameraBHVR>();
-        cdCount = cdFrames.faceNumber;
-
-        completeFaces = cfCount + cbCount + clCount + crCount + cuCount + cdCount;
-        Debug.Log("Complete Faces Panorama Capture = " + completeFaces);
-        Debug.Log("f = " + cfCount);
-        Debug.Log("b = " + cbCount);
-        Debug.Log("l = " + clCount);
-        Debug.Log("r = " + crCount);
-        Debug.Log("u = " + cuCount);
-        Debug.Log("d = " + cdCount);
-
-        capture = cfFrames.capture;
-
-        if (completeFaces == 6)
-        {
-            Debug.Log("six faces");
-            completeFaces = 0;
-            Debug.Log("Panorama Capture " + completeFaces);
-            Capture();
-        }
+        RayTraceCameraBHVR cdCam = cd.GetComponent<RayTraceCameraBHVR>();
+        cdCam.startRender = true;
+        cdCam.renderComplete = false;
     }
 
     void Capture()
     {
-        Debug.Log("Capturing");
         Graphics.CopyTexture(faceR, 0, cubeMapLeft, 0);
         Graphics.CopyTexture(faceL, 0, cubeMapLeft, 1);
         Graphics.CopyTexture(faceD, 0, cubeMapLeft, 2);

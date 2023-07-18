@@ -7,7 +7,7 @@ static const float PI = 3.14159265f;
 
 float eps = 0.5;
 
-float s = 0.0;
+float a_bh = 0.0;
 
 // Output parameters
 RWTexture2D<float4> Position;
@@ -167,7 +167,7 @@ float4x4 Metric(float4 xyz)
   float z = xyz[3];
 
   float rad = sqrt(Pow2(x) + Pow2(y) + Pow2(z));
-  float r = sqrt((Pow2(rad)-Pow2(s)+sqrt(Pow2(Pow2(rad)-Pow2(s))+4.0*Pow2(s)*Pow2(z)))/2.0);
+  float r = sqrt((Pow2(rad)-Pow2(a_bh)+sqrt(Pow2(Pow2(rad)-Pow2(a_bh))+4.0*Pow2(a_bh)*Pow2(z)))/2.0);
 
   if(r < eps)
   {
@@ -178,8 +178,8 @@ float4x4 Metric(float4 xyz)
   // null vector l
   float l_lower[4];
   l_lower[0] = 1.0;
-  l_lower[1] = (r*x + (s)*y)/( Pow2(r) + Pow2(s) );
-  l_lower[2] = (r*y - (s)*x)/( Pow2(r) + Pow2(s) );
+  l_lower[1] = (r*x + (a_bh)*y)/( Pow2(r) + Pow2(a_bh) );
+  l_lower[2] = (r*y - (a_bh)*x)/( Pow2(r) + Pow2(a_bh) );
   l_lower[3] = z/r;
 
   // g_nm = f*l_n*l_m + eta_nm, where eta_nm is Minkowski metric
@@ -192,7 +192,7 @@ float4x4 Metric(float4 xyz)
         {0., 0., 0., 0.}
     };
 
-  float f = 2.0 * Pow2(r)*r / (Pow2(Pow2(r)) + Pow2(s)*Pow2(z));
+  float f = 2.0 * Pow2(r)*r / (Pow2(Pow2(r)) + Pow2(a_bh)*Pow2(z));
 
   glower[0][0] = f * l_lower[0]*l_lower[0] - 1.0;
   glower[0][1] = f * l_lower[0]*l_lower[1];
@@ -392,7 +392,7 @@ float4x4 InverseMetric(float4 xyz)
     float z = xyz[3];
   
   float rad = sqrt(Pow2(x) + Pow2(y) + Pow2(z));
-  float r = sqrt((Pow2(rad)-Pow2(s)+sqrt(Pow2(Pow2(rad)-Pow2(s))+4.0*Pow2(s)*Pow2(z)))/2.0);
+  float r = sqrt((Pow2(rad)-Pow2(a_bh)+sqrt(Pow2(Pow2(rad)-Pow2(a_bh))+4.0*Pow2(a_bh)*Pow2(z)))/2.0);
   
   if(r < eps)
   {
@@ -403,8 +403,8 @@ float4x4 InverseMetric(float4 xyz)
   // null vector l
   float l_upper[4];
   l_upper[0] = -1.0;
-  l_upper[1] = (r*x + (s)*y)/( Pow2(r) + Pow2(s) );
-  l_upper[2] = (r*y - (s)*x)/( Pow2(r) + Pow2(s) );
+  l_upper[1] = (r*x + (-a_bh)*y)/( Pow2(r) + Pow2(a_bh) );
+  l_upper[2] = (r*y - (a_bh)*x)/( Pow2(r) + Pow2(a_bh) );
   l_upper[3] = z/r;
 
   float4x4 gupper = 
@@ -415,7 +415,7 @@ float4x4 InverseMetric(float4 xyz)
         {0., 0., 0., 0.}
     };
 
-    float f = 2.0 * Pow2(r)*r / (Pow2(Pow2(r)) + Pow2(s)*Pow2(z));
+    float f = 2.0 * Pow2(r)*r / (Pow2(Pow2(r)) + Pow2(a_bh)*Pow2(z));
     
   // g^nm = -f*l^n*l^m + eta^nm, where eta^nm is Minkowski metric
   gupper[0][0] = -f * l_upper[0]*l_upper[0] - 1.0;

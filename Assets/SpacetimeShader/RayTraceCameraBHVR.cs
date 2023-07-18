@@ -22,7 +22,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
     [Header("Renderer Settings")]
     public int numFrames = 1000000;
     public float framesPerSecond = 30f;
-    public float updateInterval = 15f;
+    public float updateInterval = 1.0f;
     public int overSample = 4;
     public int maxSoftPasses = 5000;
     public int maxPasses = 100000;
@@ -62,6 +62,10 @@ public class RayTraceCameraBHVR : MonoBehaviour
     public bool rComplete = false;
     public bool uComplete = false;
     public bool dComplete = false;
+
+    public bool render = false;
+
+    public bool captureImage = false;
 
     private Vector2Int
         lastCheck = new Vector2Int(0, 0);
@@ -151,17 +155,64 @@ public class RayTraceCameraBHVR : MonoBehaviour
         _momentum[2] = 0.0f;
         _momentum[3] = 0.0f;
 
-        if (cameraState == CameraState.Panorama)
+        if (renderComplete)
+        {
+            CheckComplete(true);
+            return;
+        }
+
+        /*if (cameraState == CameraState.Panorama)
         {
             CheckFaces();
-        }
+        }*/
 
         /*if(completeFacesRayTraceCameraBHVR == 6 && totalChecks == 6)
         {
             OnComplete();
         }*/
 
-        if ((!renderComplete && cameraState == CameraState.Single) || (cameraState == CameraState.Panorama && !renderComplete))
+        if (startRender)
+        {
+            //Reset variables
+            startTime = Time.realtimeSinceStartup;
+            lastCheck = Vector2Int.zero;
+            startRender = false;
+            renderComplete = false;
+            currentPass = 0;
+            currentFrame++;
+            captureImage = false;
+            render = false;
+                
+           
+
+            //Initialize shaders
+            SetShaderParameters();
+            GenerateCameraVectors();
+        }
+
+        if (!renderComplete)
+        {
+            Debug.Log("Update called");
+            //March rays
+            UpdateRay();
+            currentPass++;
+
+            if (currentPass >= maxPasses)
+            {
+                Debug.Log("checking true");
+                CheckCompleteness(true);
+            }
+            else if (Time.time > updateInterval)
+            {
+                Debug.Log("checking false");
+                updateInterval = Mathf.FloorToInt(Time.time) + 1;
+                CheckCompleteness(false);
+            }
+        }
+    }
+
+
+        /*if ((!renderComplete)
         {
             if (startRender)
             {
@@ -210,7 +261,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
                 CheckCompleteness(false);
             }
         }
-    }
+    }*/
 
         private void GenerateCameraVectors()
         {
@@ -257,6 +308,62 @@ public class RayTraceCameraBHVR : MonoBehaviour
             return outTex;
         }
 
+    private void CheckComplete(bool maxpasses)
+    {
+        GameObject cf = GameObject.Find("CameraF");
+        RayTraceCameraBHVR cfFrames = cf.GetComponent<RayTraceCameraBHVR>();
+        bool cfComplete = cfFrames.renderComplete;
+
+        GameObject cb = GameObject.Find("CameraB");
+        RayTraceCameraBHVR cbFrames = cb.GetComponent<RayTraceCameraBHVR>();
+        bool cbComplete = cbFrames.renderComplete;
+
+        GameObject cl = GameObject.Find("CameraL");
+        RayTraceCameraBHVR clFrames = cl.GetComponent<RayTraceCameraBHVR>();
+        bool clComplete = clFrames.renderComplete;
+
+        GameObject cr = GameObject.Find("CameraR");
+        RayTraceCameraBHVR crFrames = cr.GetComponent<RayTraceCameraBHVR>();
+        bool crComplete = crFrames.renderComplete;
+
+        GameObject cu = GameObject.Find("CameraU");
+        RayTraceCameraBHVR cuFrames = cu.GetComponent<RayTraceCameraBHVR>();
+        bool cuComplete = cuFrames.renderComplete;
+
+        GameObject cd = GameObject.Find("CameraD");
+        RayTraceCameraBHVR cdFrames = cd.GetComponent<RayTraceCameraBHVR>();
+        bool cdComplete = cdFrames.renderComplete;
+
+        if (!render)
+        {
+            /*if(!renderComplete)
+            {
+                CheckCompleteness(maxpasses);
+            }*/
+
+            if (cfComplete && cbComplete && clComplete && crComplete && cuComplete && cdComplete)
+            {
+                render = true;
+            }
+        }
+        else
+        {
+            bool cfCheckAll = cfFrames.render;
+            bool cbCheckAll = cbFrames.render;
+            bool clCheckAll = clFrames.render;
+            bool crCheckAll = crFrames.render;
+            bool cuCheckAll = cuFrames.render;
+            bool cdCheckAll = cdFrames.render;
+
+            if (cfCheckAll && cbCheckAll && clCheckAll && crCheckAll && cuCheckAll && cdCheckAll)
+            {
+                //startRender = true;
+
+                captureImage = true;
+            }
+        }
+        
+    }
     private void CheckCompleteness(bool maxPasses)
     {
 
@@ -302,7 +409,7 @@ public class RayTraceCameraBHVR : MonoBehaviour
                     {
                         if (completeTex.GetPixel(i, j).r == 0)
                         {
-                            //Debug.Log("Incomplete on pixel: (" + i.ToString() + ", " + j.ToString() + ")");
+                            Debug.Log("Incomplete on pixel: (" + i.ToString() + ", " + j.ToString() + ")");
                             Destroy(completeTex);
                             lastCheck = new Vector2Int(i, j);
                             return;
@@ -314,12 +421,9 @@ public class RayTraceCameraBHVR : MonoBehaviour
 
             else if (maxPasses)
             {
-                if (faceNumber != 1)
-                {
-                    faceNumber++;
-                }
-                    Destroy(completeTex);
-                    OnComplete();
+                renderComplete = true;
+                Destroy(completeTex);
+                //OnComplete();
             }  
         }
     }
@@ -450,10 +554,10 @@ public class RayTraceCameraBHVR : MonoBehaviour
             Debug.Log("all complete");
             currentFrame++;
             /*ResetSettings();*/
-            Debug.Log("Reseting");
-            faceNumber = 0;
+            //Debug.Log("Reseting");
+            /*faceNumber = 0;
             totalChecks = 0;
-            completeCheck = 0;
+            completeCheck = 0;*/
             startRender = true;
             renderComplete = false;
             hardCheck = false;
@@ -464,14 +568,11 @@ public class RayTraceCameraBHVR : MonoBehaviour
    private void ResetSettings()
    {
         Debug.Log("Reseting");
-        faceNumber = 0;
-        totalChecks = 0;
+        renderComplete = false;
         completeCheck = 0;
         startRender = true;
-        renderComplete = false;
+        render = false;
         hardCheck = false;
-        completeFacesRayTraceCameraBHVR = 0;
-        //capture = false;
    }
 
     private void SaveToFile(RenderTexture saveTexture)
