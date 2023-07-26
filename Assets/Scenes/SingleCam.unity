@@ -186,7 +186,7 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
-  timeStep: 0.01
+  timeStep: 0.001
   escapeDistance: 10000
   errorTolerance: 0.01
   numFrames: 1000000
@@ -194,7 +194,7 @@ MonoBehaviour:
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 10
-  maxPasses: 2000
+  maxPasses: 3000
   subfolder: 
   exitOnComplete: 0
   diskRadius: 3
@@ -209,6 +209,8 @@ MonoBehaviour:
   rComplete: 0
   uComplete: 0
   dComplete: 0
+  render: 0
+  captureImage: 0
   startRender: 1
   renderComplete: 0
   completeFacesRayTraceCameraBHVR: 0
@@ -321,7 +323,7 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
-  timeStep: 0.01
+  timeStep: 0.001
   escapeDistance: 10000
   errorTolerance: 0.01
   numFrames: 1000000
@@ -329,7 +331,7 @@ MonoBehaviour:
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 10
-  maxPasses: 2000
+  maxPasses: 3000
   subfolder: 
   exitOnComplete: 0
   diskRadius: 3
@@ -344,6 +346,8 @@ MonoBehaviour:
   rComplete: 0
   uComplete: 0
   dComplete: 0
+  render: 0
+  captureImage: 0
   startRender: 1
   renderComplete: 0
   completeFacesRayTraceCameraBHVR: 0
@@ -440,7 +444,7 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
-  timeStep: 0.01
+  timeStep: 0.001
   escapeDistance: 10000
   errorTolerance: 0.01
   numFrames: 1000000
@@ -448,7 +452,7 @@ MonoBehaviour:
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 10
-  maxPasses: 2000
+  maxPasses: 3000
   subfolder: 
   exitOnComplete: 0
   diskRadius: 3
@@ -463,6 +467,8 @@ MonoBehaviour:
   rComplete: 0
   uComplete: 0
   dComplete: 0
+  render: 0
+  captureImage: 0
   startRender: 1
   renderComplete: 0
   completeFacesRayTraceCameraBHVR: 0
@@ -575,7 +581,7 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
-  timeStep: 0.01
+  timeStep: 0.001
   escapeDistance: 10000
   errorTolerance: 0.01
   numFrames: 1000000
@@ -583,7 +589,7 @@ MonoBehaviour:
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 10
-  maxPasses: 2000
+  maxPasses: 3000
   subfolder: 
   exitOnComplete: 0
   diskRadius: 3
@@ -598,6 +604,8 @@ MonoBehaviour:
   rComplete: 0
   uComplete: 0
   dComplete: 0
+  render: 0
+  captureImage: 0
   startRender: 1
   renderComplete: 0
   completeFacesRayTraceCameraBHVR: 0
@@ -658,6 +666,7 @@ GameObject:
   - component: {fileID: 1066622178}
   - component: {fileID: 1066622176}
   - component: {fileID: 1066622175}
+  - component: {fileID: 1066622177}
   m_Layer: 0
   m_Name: 360Cam
   m_TagString: Untagged
@@ -698,8 +707,9 @@ MonoBehaviour:
   clCount: 0
   crCount: 0
   cuCount: 0
-  cdCount: 0
+  captureImage: 0
   capture: 0
+  subfolder: 
 --- !u!114 &1066622176
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -722,6 +732,28 @@ MonoBehaviour:
   frameComplete: 0
   numFramesCheck: 0
   numFrames: 0
+--- !u!114 &1066622177
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1066622174}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 18649578ef176424e8b5cc0e81ba4cdf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  framerate: 10
+  timeStep: 0.0001
+  errorTolerance: 0.001
+  t_0: 0
+  rho_s: 0
+  position: []
+  momentum: []
+  frameComplete: 0
+  numFramesCheck: 0
+  numFrames: 0
 --- !u!4 &1066622178
 Transform:
   m_ObjectHideFlags: 0
@@ -730,7 +762,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1066622174}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -118.5}
+  m_LocalPosition: {x: 0, y: 0, z: -100}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 1920951166}
@@ -900,7 +932,7 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
-  timeStep: 0.01
+  timeStep: 0.001
   escapeDistance: 10000
   errorTolerance: 0.01
   numFrames: 1000000
@@ -908,7 +940,7 @@ MonoBehaviour:
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 10
-  maxPasses: 2000
+  maxPasses: 3000
   subfolder: 
   exitOnComplete: 0
   diskRadius: 3
@@ -923,6 +955,8 @@ MonoBehaviour:
   rComplete: 0
   uComplete: 0
   dComplete: 0
+  render: 0
+  captureImage: 0
   startRender: 1
   renderComplete: 0
   completeFacesRayTraceCameraBHVR: 0
@@ -1063,7 +1097,7 @@ MonoBehaviour:
   cameraVectorShader: {fileID: 7200000, guid: 7d5d480332883234590cd882ad5661fc, type: 3}
   rayUpdateShader: {fileID: 7200000, guid: 7d51a6c3ef5b3ac47811b72ebf37b33b, type: 3}
   skyboxTexture: {fileID: 2800000, guid: 5c4c0fc3817c4b2418e7a92d8bea9cff, type: 3}
-  timeStep: 0.01
+  timeStep: 0.001
   escapeDistance: 10000
   errorTolerance: 0.01
   numFrames: 1000000
@@ -1071,7 +1105,7 @@ MonoBehaviour:
   updateInterval: 15
   overSample: 1
   maxSoftPasses: 10
-  maxPasses: 2000
+  maxPasses: 3000
   subfolder: 
   exitOnComplete: 0
   diskRadius: 0
@@ -1086,6 +1120,8 @@ MonoBehaviour:
   rComplete: 0
   uComplete: 0
   dComplete: 0
+  render: 0
+  captureImage: 0
   startRender: 1
   renderComplete: 0
   completeFacesRayTraceCameraBHVR: 0

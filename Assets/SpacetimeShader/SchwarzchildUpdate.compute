@@ -678,9 +678,9 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     //bool hitDisk = diskHit(x, dist);
     //float noise = DiskNoise(x);
 
-    if((dist < (1.0 + 10*tol) * metric_horizon))
+    if((dist < 2.0 * metric_horizon))
     {
-        Color[id.xy] = float4(0.0, 0.0, 0.0, 0.0);
+        Color[id.xy] = float4(0.0, 1.0, 0.0, 0.0);
         isComplete[id.xy] = 1;
     }
 

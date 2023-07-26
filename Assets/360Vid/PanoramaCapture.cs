@@ -1,4 +1,5 @@
 using System.Collections;
+using System.IO;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -32,6 +33,8 @@ public class PanoramaCapture : MonoBehaviour
     public bool captureImage;
 
     public bool capture = false;
+
+    public string subfolder = "";
 
     // Start is called before the first frame update
     void Start()
@@ -100,7 +103,6 @@ public class PanoramaCapture : MonoBehaviour
 
         cubeMapLeft.ConvertToEquirect(equirectRT, Camera.MonoOrStereoscopicEye.Mono);
 
-
         Save(equirectRT);
     }
 
@@ -115,8 +117,26 @@ public class PanoramaCapture : MonoBehaviour
 
         byte[] bytes = flippedTex.EncodeToJPG();
 
-        string path = Application.dataPath + "/360" + "_" + frameCount.ToString() + ".jpeg";
-        System.IO.File.WriteAllBytes(path, bytes);
+        try
+        {
+            string filename = "360_" + frameCount + ".jpg";
+
+            string fullPath = Application.dataPath + "/PanoramaFrames/";
+            fullPath = string.IsNullOrEmpty(subfolder) ? fullPath : fullPath + subfolder + "/";
+
+            if (!Directory.Exists(fullPath))
+            {
+                Directory.CreateDirectory(fullPath);
+            }
+
+            File.WriteAllBytes(fullPath + filename, bytes);
+            Debug.Log("File saved.");
+        }
+
+        catch
+        {
+            Debug.LogWarning("ERROR: Failure to save file.");
+        }
         frameCount++;
     }
 

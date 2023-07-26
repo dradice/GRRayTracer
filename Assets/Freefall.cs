@@ -5,7 +5,7 @@ using UnityEngine;
 public class Freefall : MonoBehaviour
 {
     public float framerate = 3.0f;
-    public float timeStep = 1e-4f;
+    public float timeStep = 1e-3f;
     public float errorTolerance = 1e-3f;
     public float t_0 = 0.0f;
     public float rho_s;
@@ -14,15 +14,19 @@ public class Freefall : MonoBehaviour
     public float[] momentum;
 
     public bool frameComplete;
-    public int numFramesCheck = 0;
+    public int numFramesCheck = 1;
     public int numFrames = 0;
+
+    float eps = 0.5f;
+
+    float a_bh = 0.0f;
 
     void Start()
     {
 
         position = new float[4] { 0.0f, (float)transform.position[0], (float)transform.position[1], (float)transform.position[2] };
         momentum = new float[4] { 1.0f, 0.0f, 0.0f, 0.0f };
-        
+
     }
 
     float Pow7(float input)
@@ -142,10 +146,10 @@ public class Freefall : MonoBehaviour
             }
         }
     }
-
-    void Metric(float[] x, ref float[,] g)
+    
+    void Metric(float[] xyz, ref float[,] g)
     {
-        float rho = Mathf.Sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3]));
+        /*float rho = Mathf.Sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3]));
 
         float g_tt = -Pow2((1 - rho_s / rho) / (1 + rho_s / rho));
         float g_xx = Pow4((1 + rho_s / rho));
@@ -156,37 +160,135 @@ public class Freefall : MonoBehaviour
         {
             for (int j = 0; j < 4; j++)
             {
-                    g[i, j] = 0.0f;
-                
+                g[i, j] = 0.0f;
+
             }
         }
         g[0, 0] = g_tt;
         g[1, 1] = g_xx;
         g[2, 2] = g_yy;
-        g[3, 3] = g_zz;
+        g[3, 3] = g_zz;*/
 
-    }
+        float x = xyz[1];
+        float y = xyz[2];
+        float z = xyz[3];
 
-    void InverseMetric(float[] x, ref float[,] g)
-    {
-        float rho = Mathf.Sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3]));
+        float rad = Mathf.Sqrt(Pow2(x) + Pow2(y) + Pow2(z));
+        float r = Mathf.Sqrt((Pow2(rad) - Pow2(a_bh) + Mathf.Sqrt(Pow2(Pow2(rad) - Pow2(a_bh)) + 4.0f * Pow2(a_bh) * Pow2(z))) / 2.0f);
 
-        float g_tt = -Pow2((1 - rho_s / rho) / (1 + rho_s / rho));
-        float g_xx = Pow4((1 + rho_s / rho));
-        float g_yy = g_xx;
-        float g_zz = g_xx;
-
-        for (int i = 0; i < 4; i++)
+        if (r < eps)
         {
-            for (int j = 0; j < 4; j++)
+            r = eps / 2.0f + (r * r / (2 * eps));
+        }
+
+        // Set covariant components
+        // null vector l
+        float[] l_lower = new float[4];
+        l_lower[0] = 1.0f;
+        l_lower[1] = (r * x + (a_bh) * y) / (Pow2(r) + Pow2(a_bh));
+        l_lower[2] = (r * y - (a_bh) * x) / (Pow2(r) + Pow2(a_bh));
+        l_lower[3] = z / r;
+
+        // g_nm = f*l_n*l_m + eta_nm, where eta_nm is Minkowski metric
+
+        float f = 2.0f * Pow2(r) * r / (Pow2(Pow2(r)) + Pow2(a_bh) * Pow2(z));
+
+        for (int a = 0; a < 4; a++)
+        {
+            for (int b = 0; b < 4; b++)
             {
-                    g[i, j] = 0.0f;
+                g[a, b] = 0.0f;
             }
         }
-        g[0, 0] = 1.0f / g_tt;
-        g[1, 1] = 1.0f / g_xx;
-        g[2, 2] = 1.0f / g_yy;
-        g[3, 3] = 1.0f / g_zz;
+
+        g[0,0] = f * l_lower[0] * l_lower[0] - 1.0f;
+        g[0,1] = f * l_lower[0] * l_lower[1];
+        g[0,2] = f * l_lower[0] * l_lower[2];
+        g[0,3] = f * l_lower[0] * l_lower[3];
+        g[1,0] = g[0,1];
+        g[1,1] = f * l_lower[1] * l_lower[1] + 1.0f;
+        g[1,2] = f * l_lower[1] * l_lower[2];
+        g[1,3] = f * l_lower[1] * l_lower[3];
+        g[2,0] = g[0,2];
+        g[2,1] = g[1,2];
+        g[2,2] = f * l_lower[2] * l_lower[2] + 1.0f;
+        g[2,3] = f * l_lower[2] * l_lower[3];
+        g[3,0] = g[0,3];
+        g[3,1] = g[1,3];
+        g[3,2] = g[2,3];
+        g[3,3] = f * l_lower[3] * l_lower[3] + 1.0f;
+    }
+
+    void InverseMetric(float[] xyz, ref float[,] g)
+    {
+        /* float rho = Mathf.Sqrt((x[1] * x[1]) + (x[2] * x[2]) + (x[3] * x[3]));
+
+         float g_tt = -Pow2((1 - rho_s / rho) / (1 + rho_s / rho));
+         float g_xx = Pow4((1 + rho_s / rho));
+         float g_yy = g_xx;
+         float g_zz = g_xx;
+
+         for (int i = 0; i < 4; i++)
+         {
+             for (int j = 0; j < 4; j++)
+             {
+                 g[i, j] = 0.0f;
+             }
+         }
+         g[0, 0] = 1.0f / g_tt;
+         g[1, 1] = 1.0f / g_xx;
+         g[2, 2] = 1.0f / g_yy;
+         g[3, 3] = 1.0f / g_zz;*/
+
+        float x = xyz[1];
+        float y = xyz[2];
+        float z = xyz[3];
+
+        float rad = Mathf.Sqrt(Pow2(x) + Pow2(y) + Pow2(z));
+        float r = Mathf.Sqrt((Pow2(rad) - Pow2(a_bh) + Mathf.Sqrt(Pow2(Pow2(rad) - Pow2(a_bh)) + 4.0f * Pow2(a_bh) * Pow2(z))) / 2.0f);
+
+        if (r < eps)
+        {
+            r = eps / 2 + (r * r / (2.0f * eps));
+        }
+
+        // Set contravariant components
+        // null vector l
+        float[] l_upper = new float[4];
+        l_upper[0] = -1.0f;
+        l_upper[1] = (r * x + (-a_bh) * y) / (Pow2(r) + Pow2(a_bh));
+        l_upper[2] = (r * y - (a_bh) * x) / (Pow2(r) + Pow2(a_bh));
+        l_upper[3] = z / r;
+
+        float f = 2.0f * Pow2(r) * r / (Pow2(Pow2(r)) + Pow2(a_bh) * Pow2(z));
+
+        for(int a = 0; a < 4; a++)
+        {
+            for (int b = 0; b < 4; b++)
+            {
+                g[a, b] = 0.0f;
+            }
+        }
+
+        // g^nm = -f*l^n*l^m + eta^nm, where eta^nm is Minkowski metric
+        g[0,0] = -f * l_upper[0] * l_upper[0] - 1.0f;
+        g[0,1] = -f * l_upper[0] * l_upper[1];
+        g[0,2] = -f * l_upper[0] * l_upper[2];
+        g[0,3] = -f * l_upper[0] * l_upper[3];
+        g[1,0] = g[0,1];
+        g[1,1] = -f * l_upper[1] * l_upper[1] + 1.0f;
+        g[1,2] = -f * l_upper[1] * l_upper[2];
+        g[1,3] = -f * l_upper[1] * l_upper[3];
+        g[2,0] = g[0,2];
+        g[2,1] = g[1,2];
+        g[2,2] = -f * l_upper[2] * l_upper[2] + 1.0f;
+        g[2,3] = -f * l_upper[2] * l_upper[3];
+        g[3,0] = g[0,3];
+        g[3,1] = g[1,3];
+        g[3,2] = g[2,3];
+        g[3,3] = -f * l_upper[3] * l_upper[3] + 1.0f;
+
+
     }
 
     void Derivative(float[] x, int a, ref float[,] dg)
@@ -219,7 +321,7 @@ public class Freefall : MonoBehaviour
             for (int c = 0; c < 4; c++)
             {
                 dg[b, c] = (gPlus[b, c] - gMinus[b, c]) / (2.0f * h);
-                
+
             }
         }
 
@@ -270,7 +372,7 @@ public class Freefall : MonoBehaviour
 
         for (int a = 0; a < 4; a++)
         {
-            rhs_x_u[a] = u_u[a];
+            rhs_x_u[a] = -u_u[a];
 
             rhs_u_d[a] = 0.0f;
 
@@ -282,8 +384,8 @@ public class Freefall : MonoBehaviour
 
                 for (int c = 0; c < 4; c++)
                 {
-                 
-                    rhs_u_d[a] += dt * ((0.5f) * dg_dd[b, c] * u_u[b] * u_u[c]);
+
+                    rhs_u_d[a] -= dt * ((0.5f) * dg_dd[b, c] * u_u[b] * u_u[c]);
                 }
             }
         }
@@ -316,7 +418,7 @@ public class Freefall : MonoBehaviour
         for (int a = 0; a < 4; a++)
         {
             rhs_u_d[a] = 0.0f;
-            rhs_x_u[a] = u_u_star[a];
+            rhs_x_u[a] = -u_u_star[a];
             float[,] dg_dd = new float[4, 4];
             Derivative(x_u_star, a, ref dg_dd);
 
@@ -325,7 +427,7 @@ public class Freefall : MonoBehaviour
 
                 for (int c = 0; c < 4; c++)
                 {
-                    rhs_u_d[a] += dt * (0.5f) * (dg_dd[b, c] * u_u_star[b] * u_u_star[c]);
+                    rhs_u_d[a] -= dt * (0.5f) * (dg_dd[b, c] * u_u_star[b] * u_u_star[c]);
                 }
             }
         }
@@ -362,9 +464,9 @@ public class Freefall : MonoBehaviour
 
                 for (int b = 0; b < 4; b++)
                 {
-                    
+
                     u_u[a] += g_uu[a, b] * u_d[a];
-                    Debug.Log(g_uu[a,b]);
+                    Debug.Log(g_uu[a, b]);
                 }
             }
 
@@ -378,7 +480,12 @@ public class Freefall : MonoBehaviour
         {
             dt *= 0.5f;
         }
-        
+
+        if (dt >= framerate)
+        {
+            dt = 0.9f * framerate;
+        }
+
         return isGood;
 
     }
@@ -387,13 +494,10 @@ public class Freefall : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        /*GameObject multiCam = GameObject.Find("360Cam");
-        PanoramaCapture unify = multiCam.GetComponent<PanoramaCapture>();
-        numFrames = unify.frameCount;*/
+        GameObject multiCam = GameObject.Find("360Cam");
+        PanoramaCapture cam360 = multiCam.GetComponent<PanoramaCapture>();
+        numFrames = cam360.frameCount;
 
-        /*if (numFrames > numFramesCheck)
-        {*/
-        ///numFramesCheck = numFrames;
         if (t_0 < framerate)
         {
             float[] x = position;
@@ -410,29 +514,25 @@ public class Freefall : MonoBehaviour
 
             if (isGood)
             {
-                t_0 += timeStep;
-                position = x;
-                momentum = u;
-                Debug.Log(u[0]);
-
+            t_0 += timeStep;
+            position = x;
+            momentum = u;
+            Debug.Log("good step");
             }
         }
 
-            if (t_0 >= framerate)
+        if (t_0 >= framerate)
+        {
+            if (numFrames > numFramesCheck)
             {
-                
-                if (numFrames > numFramesCheck)
-                {
-                    numFramesCheck = numFrames;
-                    Debug.Log("updating cam pos.");
-                    transform.position = new Vector3(position[1], position[2], position[3]);
-                    t_0 = 0.0f;
-                }
-            
-        
-            } 
+            numFramesCheck = numFrames;
+            Debug.Log("updating cam pos.");
+            transform.position = new Vector3(position[1], position[2], position[3]);
+            t_0 = 0.0f;
+            }
+        }
     }
-} 
+}
 
 
 
